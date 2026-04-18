@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+enum Department {
+  MANAGEMENT_COMMITTEE
+  CEO_OFFICE
+  RISK_REVIEW_COMMITTEE
+  INNOVATION_STRATEGY
+  TECH_RESEARCH
+  MARKET_OPERATION
+  FINANCE_BUDGET
+  CONTEST_MANAGEMENT
+  CONTEST_MEMBER
+}
+
+enum ResourceType {
+  SOFTWARE
+  VIDEO
+  DOCUMENT
+  OTHER
+}
+
+enum FinanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AdminUser {
+  id               String       @id @default(cuid())
+  username         String       @unique
+  passwordHash     String
+  displayName      String
+  role             AdminRole    @default(ADMIN)
+  createdById      String?
+  createdBy        AdminUser?   @relation("AdminCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAdmins    AdminUser[]  @relation("AdminCreator")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  publishedNews    News[]
+  publishedDocs    Resource[]
+  createdEmployees IntranetUser[] @relation("IntranetCreatedBy")
+}
+
+model IntranetUser {
+  id                String           @id @default(cuid())
+  username          String           @unique
+  passwordHash      String
+  name              String
+  department        Department
+  employeeId        String           @unique
+  contact           String
+  canApproveFinance Boolean          @default(false)
+  isActive          Boolean          @default(true)
+  createdById       String?
+  createdBy         AdminUser?       @relation("IntranetCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  posts             ForumPost[]
+  replies           ForumReply[]
+  financeRequests   FinanceRequest[] @relation("FinanceRequester")
+  assignedRequests  FinanceRequest[] @relation("FinanceApprover")
+}
+
+model News {
+  id            String    @id @default(cuid())
+  title         String
+  summary       String
+  content       String
+  coverImageUrl String?
+  publishedAt   DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  publishedById String
+  publishedBy   AdminUser @relation(fields: [publishedById], references: [id], onDelete: Restrict)
+
+  @@index([publishedAt])
+}
+
+model Resource {
+  id            String       @id @default(cuid())
+  title         String
+  description   String
+  type          ResourceType
+  fileUrl       String
+  publishedAt   DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  publishedById String
+  publishedBy   AdminUser    @relation(fields: [publishedById], references: [id], onDelete: Restrict)
+
+  @@index([publishedAt])
+}
+
+model ForumCategory {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  posts     ForumPost[]
+}
+
+model ForumPost {
+  id         String        @id @default(cuid())
+  title      String
+  content    String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  categoryId String
+  category   ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  authorId   String
+  author     IntranetUser  @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  replies    ForumReply[]
+
+  @@index([createdAt])
+}
+
+model ForumReply {
+  id        String       @id @default(cuid())
+  content   String
+  createdAt DateTime     @default(now())
+  postId    String
+  post      ForumPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    IntranetUser @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+}
+
+model FinanceRequest {
+  id              String        @id @default(cuid())
+  title           String
+  itemName        String
+  amount          Decimal       @db.Decimal(10, 2)
+  justification   String
+  progressNote    String?
+  status          FinanceStatus @default(PENDING)
+  approverComment String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  requesterId     String
+  requester       IntranetUser  @relation("FinanceRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  approverId      String
+  approver        IntranetUser  @relation("FinanceApprover", fields: [approverId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+}
