@@ -4,7 +4,6 @@ import { db } from "@/lib/db";
 import { getIntranetSessionFromCookies } from "@/lib/auth";
 import { IntranetNav } from "@/components/intranet-nav";
 import { ensureForumCategories } from "@/lib/forum";
-import { AttachmentList } from "@/components/attachment-list";
 import { departmentLabels } from "@/lib/constants";
 
 type Props = {
@@ -25,7 +24,7 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
     include: {
       posts: {
         orderBy: { createdAt: "desc" },
-        include: { author: true, attachments: { orderBy: { createdAt: "asc" } } }
+        include: { author: true, _count: { select: { attachments: true } } }
       }
     }
   });
@@ -75,19 +74,11 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
             category.posts.map((post) => (
               <article className="card" key={post.id}>
                 <h3>{post.title}</h3>
-                <p className="meta" style={{ whiteSpace: "pre-wrap" }}>
-                  {post.content.length > 120 ? `${post.content.slice(0, 120)}...` : post.content}
-                </p>
                 <p className="meta">
                   发帖人：{post.author.name}（{departmentLabels[post.author.department]}） ｜{" "}
                   {post.createdAt.toLocaleString("zh-CN")}
                 </p>
-                {post.attachments.length > 0 ? (
-                  <div style={{ marginTop: "0.5rem" }}>
-                    <p className="meta">附件下载：</p>
-                    <AttachmentList attachments={post.attachments} />
-                  </div>
-                ) : null}
+                <p className="meta">附件数量：{post._count.attachments}个附件</p>
                 <Link href={`/intranet/forum/post/${post.id}`} className="btn btn-neutral">
                   查看与回帖
                 </Link>
