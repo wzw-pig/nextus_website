@@ -33,9 +33,6 @@ export default async function AdminLoginPage({ searchParams }: Props) {
         <Link href="/" className="btn btn-neutral">
           返回首页
         </Link>
-        <Link href="/admin/bootstrap" className="btn btn-neutral">
-          创建超级管理员（首次）
-        </Link>
       </div>
     </section>
   );

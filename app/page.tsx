@@ -8,7 +8,7 @@ export default async function HomePage() {
   const [latestNews, latestResources] = await Promise.all([
     db.news.findMany({
       orderBy: { publishedAt: "desc" },
-      include: { publishedBy: { select: { displayName: true } } },
+      include: { publishedBy: { select: { displayName: true } }, _count: { select: { attachments: true } } },
       take: 5
     }),
     db.resource.findMany({
@@ -108,6 +108,7 @@ export default async function HomePage() {
                 <p className="meta">
                   发布人：{item.publishedBy.displayName} ｜ {item.publishedAt.toLocaleString("zh-CN")}
                 </p>
+                {item._count.attachments > 0 ? <p className="meta">附件：{item._count.attachments} 个</p> : null}
                 <Link href={`/news/${item.id}`} className="btn btn-neutral">
                   阅读全文
                 </Link>
@@ -139,7 +140,7 @@ export default async function HomePage() {
                   类型：{resourceTypeLabels[item.type]} ｜ 发布人：{item.publishedBy.displayName}
                 </p>
                 <a className="btn btn-neutral" href={item.fileUrl} target="_blank" rel="noreferrer">
-                  打开资料
+                  下载：{item.fileName ?? "资料文件"}
                 </a>
               </article>
             ))

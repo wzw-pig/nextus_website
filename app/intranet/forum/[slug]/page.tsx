@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getIntranetSessionFromCookies } from "@/lib/auth";
 import { IntranetNav } from "@/components/intranet-nav";
 import { ensureForumCategories } from "@/lib/forum";
+import { AttachmentList } from "@/components/attachment-list";
 import { departmentLabels } from "@/lib/constants";
 
 type Props = {
@@ -24,7 +25,7 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
     include: {
       posts: {
         orderBy: { createdAt: "desc" },
-        include: { author: true }
+        include: { author: true, attachments: { orderBy: { createdAt: "asc" } } }
       }
     }
   });
@@ -47,7 +48,7 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
 
       <section className="section">
         <h2>发布新帖</h2>
-        <form className="stack" action="/api/intranet/forum/posts" method="post">
+        <form className="stack" action="/api/intranet/forum/posts" method="post" encType="multipart/form-data">
           <input type="hidden" name="categorySlug" value={category.slug} />
           <label>
             标题
@@ -56,6 +57,10 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
           <label>
             内容
             <textarea name="content" required />
+          </label>
+          <label>
+            附件（可选，支持图片/视频/文件，支持多选）
+            <input type="file" name="attachments" multiple />
           </label>
           <button className="btn btn-primary" type="submit">
             发布帖子
@@ -77,6 +82,12 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
                   发帖人：{post.author.name}（{departmentLabels[post.author.department]}） ｜{" "}
                   {post.createdAt.toLocaleString("zh-CN")}
                 </p>
+                {post.attachments.length > 0 ? (
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <p className="meta">附件下载：</p>
+                    <AttachmentList attachments={post.attachments} />
+                  </div>
+                ) : null}
                 <Link href={`/intranet/forum/post/${post.id}`} className="btn btn-neutral">
                   查看与回帖
                 </Link>

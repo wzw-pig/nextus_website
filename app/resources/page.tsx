@@ -25,7 +25,7 @@ export default async function ResourcesPage() {
                 类型：{resourceTypeLabels[item.type]} ｜ 发布人：{item.publishedBy.displayName}
               </p>
               <a href={item.fileUrl} className="btn btn-neutral" target="_blank" rel="noreferrer">
-                打开资料
+                下载：{item.fileName ?? "资料文件"}
               </a>
             </article>
           ))

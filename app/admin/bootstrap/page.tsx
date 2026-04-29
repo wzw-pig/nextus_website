@@ -23,7 +23,9 @@ export default async function BootstrapPage({ searchParams }: Props) {
       {searchParams?.ok ? <p className="ok">{decodeURIComponent(searchParams.ok)}</p> : null}
       {superAdmin ? (
         <div className="card" style={{ marginTop: "0.9rem" }}>
-          <p className="meta">当前已存在超级管理员：{superAdmin.username}。系统禁止再创建第二个超级管理员。</p>
+          <p className="meta">
+            当前已存在超级管理员：{superAdmin.username}。如需新增超级管理员，请登录后台后在管理员账号管理中创建。
+          </p>
         </div>
       ) : (
         <form className="stack" action="/api/admin/bootstrap" method="post" style={{ marginTop: "0.9rem" }}>

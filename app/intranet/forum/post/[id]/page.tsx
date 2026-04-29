@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getIntranetSessionFromCookies } from "@/lib/auth";
 import { IntranetNav } from "@/components/intranet-nav";
+import { AttachmentList } from "@/components/attachment-list";
 import { departmentLabels } from "@/lib/constants";
 
 type Props = {
@@ -22,8 +23,9 @@ export default async function ForumPostPage({ params, searchParams }: Props) {
       category: true,
       replies: {
         orderBy: { createdAt: "asc" },
-        include: { author: true }
-      }
+        include: { author: true, attachments: { orderBy: { createdAt: "asc" } } }
+      },
+      attachments: { orderBy: { createdAt: "asc" } }
     }
   });
 
@@ -46,15 +48,31 @@ export default async function ForumPostPage({ params, searchParams }: Props) {
         <div className="card" style={{ marginTop: "0.8rem" }}>
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.65 }}>{post.content}</p>
         </div>
+        <div className="card" style={{ marginTop: "0.8rem" }}>
+          <p className="meta" style={{ marginTop: 0 }}>
+            附件下载
+          </p>
+          {post.attachments.length > 0 ? (
+            <AttachmentList attachments={post.attachments} />
+          ) : (
+            <p className="meta" style={{ marginBottom: 0 }}>
+              暂无附件
+            </p>
+          )}
+        </div>
       </section>
 
       <section className="section">
         <h2>回帖</h2>
-        <form className="stack" action="/api/intranet/forum/replies" method="post">
+        <form className="stack" action="/api/intranet/forum/replies" method="post" encType="multipart/form-data">
           <input type="hidden" name="postId" value={post.id} />
           <label>
             内容
             <textarea name="content" required />
+          </label>
+          <label>
+            附件（可选，支持图片/视频/文件，支持多选）
+            <input type="file" name="attachments" multiple />
           </label>
           <button className="btn btn-primary" type="submit">
             发布回帖
@@ -73,6 +91,7 @@ export default async function ForumPostPage({ params, searchParams }: Props) {
                   {reply.author.name}（{departmentLabels[reply.author.department]}） ｜{" "}
                   {reply.createdAt.toLocaleString("zh-CN")}
                 </p>
+                {reply.attachments.length > 0 ? <AttachmentList attachments={reply.attachments} /> : null}
               </article>
             ))
           ) : (

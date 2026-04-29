@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { AttachmentList } from "@/components/attachment-list";
 
 type Props = {
   params: { id: string };
@@ -10,7 +11,10 @@ export const dynamic = "force-dynamic";
 export default async function NewsDetailPage({ params }: Props) {
   const news = await db.news.findUnique({
     where: { id: params.id },
-    include: { publishedBy: { select: { displayName: true } } }
+    include: {
+      publishedBy: { select: { displayName: true } },
+      attachments: { orderBy: { createdAt: "asc" } }
+    }
   });
 
   if (!news) notFound();
@@ -28,6 +32,18 @@ export default async function NewsDetailPage({ params }: Props) {
       ) : null}
       <div className="card" style={{ marginTop: "0.8rem" }}>
         <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{news.content}</p>
+      </div>
+      <div className="card" style={{ marginTop: "0.8rem" }}>
+        <p className="meta" style={{ marginTop: 0 }}>
+          附件下载
+        </p>
+        {news.attachments.length > 0 ? (
+          <AttachmentList attachments={news.attachments} />
+        ) : (
+          <p className="meta" style={{ marginBottom: 0 }}>
+            暂无附件
+          </p>
+        )}
       </div>
     </article>
   );

@@ -49,8 +49,22 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
       </section>
 
       <section className="section">
+        <h2>当前后台账号重置密码</h2>
+        <p className="meta">仅需输入新密码，无需输入原密码。</p>
+        <form className="stack" action="/api/admin/self-password" method="post" style={{ marginTop: "0.8rem" }}>
+          <label>
+            新密码
+            <input type="password" name="password" required minLength={8} />
+          </label>
+          <button className="btn btn-primary" type="submit">
+            重置我的后台密码
+          </button>
+        </form>
+      </section>
+
+      <section className="section">
         <h2>新闻发布与管理（增查删改）</h2>
-        <form className="stack" action="/api/admin/news" method="post">
+        <form className="stack" action="/api/admin/news" method="post" encType="multipart/form-data">
           <input type="hidden" name="action" value="create" />
           <div className="row">
             <label>
@@ -58,8 +72,8 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
               <input name="title" required />
             </label>
             <label>
-              封面图 URL（可选）
-              <input name="coverImageUrl" placeholder="https://..." />
+              封面图（可选，仅图片；不上传则默认团队 logo）
+              <input type="file" name="coverImage" accept="image/*,.svg" />
             </label>
           </div>
           <label>
@@ -69,6 +83,10 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
           <label>
             正文
             <textarea name="content" required />
+          </label>
+          <label>
+            附件（可选，支持图片/视频/文件，支持多选）
+            <input type="file" name="attachments" multiple />
           </label>
           <button type="submit" className="btn btn-primary">
             发布新闻
@@ -96,13 +114,20 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
                     {item.publishedAt.toLocaleString("zh-CN")}
                   </td>
                   <td>
-                    <form className="stack" action="/api/admin/news" method="post">
+                    <form className="stack" action="/api/admin/news" method="post" encType="multipart/form-data">
                       <input type="hidden" name="id" value={item.id} />
                       <input type="hidden" name="action" value="update" />
                       <input name="title" defaultValue={item.title} required />
                       <input name="summary" defaultValue={item.summary} required />
                       <textarea name="content" defaultValue={item.content} required />
-                      <input name="coverImageUrl" defaultValue={item.coverImageUrl ?? ""} placeholder="封面图 URL（可选）" />
+                      <label>
+                        封面图（可选，仅图片；不上传则保留原封面）
+                        <input type="file" name="coverImage" accept="image/*,.svg" />
+                      </label>
+                      <label>
+                        新增附件（可选，多选后追加到该新闻）
+                        <input type="file" name="attachments" multiple />
+                      </label>
                       <div className="actions">
                         <button className="btn btn-neutral" type="submit">
                           保存修改
@@ -133,7 +158,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
 
       <section className="section">
         <h2>资料发布与管理（增查删改）</h2>
-        <form className="stack" action="/api/admin/resources" method="post">
+        <form className="stack" action="/api/admin/resources" method="post" encType="multipart/form-data">
           <input type="hidden" name="action" value="create" />
           <div className="row">
             <label>
@@ -156,8 +181,8 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
             <textarea name="description" required />
           </label>
           <label>
-            下载地址 URL
-            <input name="fileUrl" required placeholder="https://..." />
+            资料文件（必传，不限格式）
+            <input type="file" name="file" required />
           </label>
           <button className="btn btn-primary" type="submit">
             发布资料
@@ -169,7 +194,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
               <tr>
                 <th>标题</th>
                 <th>类型</th>
-                <th>下载地址</th>
+                <th>下载文件</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -180,26 +205,29 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
                   <td>{resourceTypeLabels[item.type]}</td>
                   <td>
                     <a href={item.fileUrl} target="_blank" rel="noreferrer">
-                      {item.fileUrl}
+                      {item.fileName ?? item.fileUrl}
                     </a>
                   </td>
                   <td>
-                    <form className="stack" action="/api/admin/resources" method="post">
-                      <input type="hidden" name="id" value={item.id} />
-                      <input type="hidden" name="action" value="update" />
-                      <input name="title" defaultValue={item.title} required />
+                     <form className="stack" action="/api/admin/resources" method="post" encType="multipart/form-data">
+                       <input type="hidden" name="id" value={item.id} />
+                       <input type="hidden" name="action" value="update" />
+                       <input name="title" defaultValue={item.title} required />
                       <select name="type" defaultValue={item.type}>
                         {Object.entries(resourceTypeLabels).map(([value, label]) => (
                           <option key={value} value={value}>
                             {label}
                           </option>
                         ))}
-                      </select>
-                      <textarea name="description" defaultValue={item.description} required />
-                      <input name="fileUrl" defaultValue={item.fileUrl} required />
-                      <button className="btn btn-neutral" type="submit">
-                        保存修改
-                      </button>
+                       </select>
+                       <textarea name="description" defaultValue={item.description} required />
+                       <label>
+                         替换资料文件（可选，不限格式）
+                         <input type="file" name="file" />
+                       </label>
+                       <button className="btn btn-neutral" type="submit">
+                         保存修改
+                       </button>
                     </form>
                     <form action="/api/admin/resources" method="post" style={{ marginTop: "0.5rem" }}>
                       <input type="hidden" name="id" value={item.id} />
@@ -360,8 +388,8 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
 
       {session.role === "SUPER_ADMIN" ? (
         <section className="section">
-          <h2>普通管理员账号管理（仅超级管理员可见）</h2>
-          <p className="meta">系统仅允许一个超级管理员。你可以在此增查删改普通管理员账号。</p>
+          <h2>后台管理员账号管理（仅超级管理员可见）</h2>
+          <p className="meta">可创建和修改其他超级管理员、普通管理员账号。</p>
           <form className="stack" action="/api/admin/admin-users" method="post">
             <input type="hidden" name="action" value="create" />
             <div className="row">
@@ -375,11 +403,18 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
               </label>
             </div>
             <label>
+              管理员角色
+              <select name="role" defaultValue="ADMIN">
+                <option value="ADMIN">普通管理员</option>
+                <option value="SUPER_ADMIN">超级管理员</option>
+              </select>
+            </label>
+            <label>
               初始密码
               <input type="password" name="password" minLength={8} required />
             </label>
             <button className="btn btn-primary" type="submit">
-              创建普通管理员
+              创建管理员账号
             </button>
           </form>
 
@@ -400,12 +435,19 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
                     <td>{admin.displayName}</td>
                     <td>{admin.role === "SUPER_ADMIN" ? "超级管理员" : "普通管理员"}</td>
                     <td>
-                      {admin.role === "ADMIN" ? (
+                      {admin.id !== session.userId ? (
                         <>
                           <form className="stack" action="/api/admin/admin-users" method="post">
                             <input type="hidden" name="action" value="update" />
                             <input type="hidden" name="id" value={admin.id} />
                             <input name="displayName" defaultValue={admin.displayName} required />
+                            <label>
+                              角色
+                              <select name="role" defaultValue={admin.role}>
+                                <option value="ADMIN">普通管理员</option>
+                                <option value="SUPER_ADMIN">超级管理员</option>
+                              </select>
+                            </label>
                             <label>
                               重置密码（可选）
                               <input type="password" name="password" minLength={8} />
@@ -414,16 +456,20 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
                               保存修改
                             </button>
                           </form>
-                          <form action="/api/admin/admin-users" method="post" style={{ marginTop: "0.5rem" }}>
-                            <input type="hidden" name="action" value="delete" />
-                            <input type="hidden" name="id" value={admin.id} />
-                            <button className="btn btn-neutral" type="submit">
-                              删除
-                            </button>
-                          </form>
+                          {admin.role === "ADMIN" ? (
+                            <form action="/api/admin/admin-users" method="post" style={{ marginTop: "0.5rem" }}>
+                              <input type="hidden" name="action" value="delete" />
+                              <input type="hidden" name="id" value={admin.id} />
+                              <button className="btn btn-neutral" type="submit">
+                                删除
+                              </button>
+                            </form>
+                          ) : (
+                            <span className="meta">超级管理员仅支持修改，不支持删除</span>
+                          )}
                         </>
                       ) : (
-                        <span className="meta">超级管理员不可在此删除或降级</span>
+                        <span className="meta">当前登录账号不可在此修改或删除</span>
                       )}
                     </td>
                   </tr>

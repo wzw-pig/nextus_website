@@ -7,7 +7,8 @@ export default async function NewsPage() {
   const news = await db.news.findMany({
     orderBy: { publishedAt: "desc" },
     include: {
-      publishedBy: { select: { displayName: true } }
+      publishedBy: { select: { displayName: true } },
+      _count: { select: { attachments: true } }
     }
   });
 
@@ -24,6 +25,7 @@ export default async function NewsPage() {
               <p className="meta">
                 发布人：{item.publishedBy.displayName} ｜ {item.publishedAt.toLocaleString("zh-CN")}
               </p>
+              {item._count.attachments > 0 ? <p className="meta">附件：{item._count.attachments} 个</p> : null}
               <Link href={`/news/${item.id}`} className="btn btn-neutral">
                 阅读全文
               </Link>

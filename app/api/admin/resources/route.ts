@@ -2,6 +2,7 @@ import { ResourceType } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAdminSessionFromRequest } from "@/lib/auth";
+import { uploadSingleFileToBlob } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,8 @@ export async function POST(request: NextRequest) {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const type = String(formData.get("type") ?? "").trim();
-  const fileUrl = String(formData.get("fileUrl") ?? "").trim();
+  const fileInput = formData.get("file");
+  const file = fileInput instanceof File && fileInput.size > 0 ? fileInput : null;
 
   if (!["create", "update", "delete"].includes(action)) {
     return toDashboard(request, "error=无效资料操作");
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
     return toDashboard(request, "ok=资料已删除");
   }
 
-  if (!title || !description || !fileUrl) {
+  if (!title || !description) {
     return toDashboard(request, "error=资料信息不能为空");
   }
 
@@ -42,11 +44,16 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "create") {
+    if (!file) return toDashboard(request, "error=请上传资料文件");
+    const uploaded = await uploadSingleFileToBlob(file, "resource");
     await db.resource.create({
       data: {
         title,
         description,
-        fileUrl,
+        fileUrl: uploaded.url,
+        fileName: uploaded.name,
+        fileMimeType: uploaded.mimeType,
+        fileSize: uploaded.size,
         type: type as ResourceType,
         publishedById: session.userId
       }
@@ -55,13 +62,21 @@ export async function POST(request: NextRequest) {
   }
 
   if (!id) return toDashboard(request, "error=缺少资料ID");
+  const uploaded = file ? await uploadSingleFileToBlob(file, "resource") : null;
 
   await db.resource.update({
     where: { id },
     data: {
       title,
       description,
-      fileUrl,
+      ...(uploaded
+        ? {
+            fileUrl: uploaded.url,
+            fileName: uploaded.name,
+            fileMimeType: uploaded.mimeType,
+            fileSize: uploaded.size
+          }
+        : {}),
       type: type as ResourceType
     }
   });

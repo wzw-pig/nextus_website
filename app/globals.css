@@ -222,6 +222,47 @@ main {
   font-size: 0.9rem;
 }
 
+.attachment-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+}
+
+.attachment-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.attachment-name {
+  display: block;
+  color: var(--text);
+}
+
+.attachment-size {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .badge {
   display: inline-block;
   background: #e2e8f0;
