@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 
 type UploadedAttachment = {
   name: string;
@@ -13,6 +13,10 @@ function getBlobToken() {
     throw new Error("BLOB_READ_WRITE_TOKEN 未配置，请先在环境变量中设置");
   }
   return token;
+}
+
+function isBlobUrl(url: string) {
+  return /^https?:\/\/.+/i.test(url);
 }
 
 function sanitizeFilename(name: string) {
@@ -59,4 +63,10 @@ export async function uploadImageToBlob(file: File, folder: "news-cover"): Promi
 
 export async function uploadAttachmentsToBlob(files: File[], folder: "news" | "forum"): Promise<UploadedAttachment[]> {
   return Promise.all(files.map((file) => uploadSingleFileToBlob(file, folder)));
+}
+
+export async function deleteBlobByUrl(url: string) {
+  if (!isBlobUrl(url)) return;
+  const token = getBlobToken();
+  await del(url, { token });
 }

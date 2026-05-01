@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     displayName: user.name,
     department: user.department,
     canApproveFinance: user.canApproveFinance,
+    isForumAdmin: user.isForumAdmin,
     employeeId: user.employeeId,
     contact: user.contact
   });

@@ -6,7 +6,16 @@ import { uploadAttachmentsToBlob, uploadImageToBlob } from "@/lib/blob";
 export const runtime = "nodejs";
 
 function toDashboard(request: NextRequest, query: string) {
-  return NextResponse.redirect(new URL(`/admin/dashboard?${query}`, request.url));
+  return NextResponse.redirect(new URL(`/admin/dashboard/news?${query}`, request.url));
+}
+
+function wantsJson(request: NextRequest) {
+  const accept = request.headers.get("accept") ?? "";
+  return accept.includes("application/json") || request.headers.get("x-requested-with") === "XMLHttpRequest";
+}
+
+function json(ok: boolean, message: string, redirectTo?: string) {
+  return NextResponse.json({ ok, message, redirectTo });
 }
 
 function isValidCoverImage(file: File) {
@@ -17,7 +26,7 @@ function isValidCoverImage(file: File) {
 
 export async function POST(request: NextRequest) {
   const session = await getAdminSessionFromRequest(request);
-  if (!session) return toDashboard(request, "error=后台登录已失效");
+  if (!session) return wantsJson(request) ? json(false, "后台登录已失效") : toDashboard(request, "error=后台登录已失效");
 
   const formData = await request.formData();
   const action = String(formData.get("action") ?? "");
@@ -32,26 +41,30 @@ export async function POST(request: NextRequest) {
   const coverFile = coverImageFile instanceof File && coverImageFile.size > 0 ? coverImageFile : null;
 
   if (!["create", "update", "delete"].includes(action)) {
-    return toDashboard(request, "error=无效新闻操作");
+    return wantsJson(request) ? json(false, "无效新闻操作") : toDashboard(request, "error=无效新闻操作");
   }
 
   if (action === "delete") {
-    if (!id) return toDashboard(request, "error=缺少新闻ID");
+    if (!id) return wantsJson(request) ? json(false, "缺少新闻ID") : toDashboard(request, "error=缺少新闻ID");
     await db.news.delete({ where: { id } });
-    return toDashboard(request, "ok=新闻已删除");
+    return wantsJson(request) ? json(true, "新闻已删除", "/admin/dashboard/news") : toDashboard(request, "ok=新闻已删除");
   }
 
   if (!title || !summary || !content) {
-    return toDashboard(request, "error=标题、摘要和正文不能为空");
+    return wantsJson(request)
+      ? json(false, "标题、摘要和正文不能为空")
+      : toDashboard(request, "error=标题、摘要和正文不能为空");
   }
   if (attachmentInputs.length > 0 && attachments.length === 0) {
-    return toDashboard(request, "error=附件读取失败，请重新选择文件后提交");
+    return wantsJson(request)
+      ? json(false, "附件读取失败，请重新选择文件后提交")
+      : toDashboard(request, "error=附件读取失败，请重新选择文件后提交");
   }
   if (coverImageFile && !(coverImageFile instanceof File)) {
-    return toDashboard(request, "error=封面图读取失败");
+    return wantsJson(request) ? json(false, "封面图读取失败") : toDashboard(request, "error=封面图读取失败");
   }
   if (coverFile && !isValidCoverImage(coverFile)) {
-    return toDashboard(request, "error=封面图仅支持图片格式");
+    return wantsJson(request) ? json(false, "封面图仅支持图片格式") : toDashboard(request, "error=封面图仅支持图片格式");
   }
 
   if (action === "create") {
@@ -77,10 +90,10 @@ export async function POST(request: NextRequest) {
           : undefined
       }
     });
-    return toDashboard(request, "ok=新闻发布成功");
+    return wantsJson(request) ? json(true, "新闻发布成功", "/admin/dashboard/news") : toDashboard(request, "ok=新闻发布成功");
   }
 
-  if (!id) return toDashboard(request, "error=缺少新闻ID");
+  if (!id) return wantsJson(request) ? json(false, "缺少新闻ID") : toDashboard(request, "error=缺少新闻ID");
   const coverImage = coverFile ? await uploadImageToBlob(coverFile, "news-cover") : null;
   const uploadedAttachments = attachments.length > 0 ? await uploadAttachmentsToBlob(attachments, "news") : [];
   await db.news.update({
@@ -103,5 +116,5 @@ export async function POST(request: NextRequest) {
         : undefined
     }
   });
-  return toDashboard(request, "ok=新闻更新成功");
+  return wantsJson(request) ? json(true, "新闻更新成功", "/admin/dashboard/news") : toDashboard(request, "ok=新闻更新成功");
 }

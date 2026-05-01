@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getIntranetSessionFromCookies } from "@/lib/auth";
 import { IntranetNav } from "@/components/intranet-nav";
 import { AttachmentList } from "@/components/attachment-list";
+import { AsyncSubmitForm } from "@/components/async-submit-form";
 import { departmentLabels } from "@/lib/constants";
 
 type Props = {
@@ -59,12 +60,48 @@ export default async function ForumPostPage({ params, searchParams }: Props) {
               暂无附件
             </p>
           )}
+          {session.isForumAdmin ? (
+            <div className="stack" style={{ marginTop: "0.6rem" }}>
+              {post.attachments.map((attachment) => (
+                <form key={attachment.id} className="row" action="/api/intranet/forum/moderation/attachments" method="post">
+                  <input type="hidden" name="attachmentId" value={attachment.id} />
+                  <input name="reason" placeholder={`删除附件 ${attachment.name} 的理由`} required />
+                  <button className="btn btn-neutral" type="submit">
+                    删除附件
+                  </button>
+                </form>
+              ))}
+            </div>
+          ) : null}
         </div>
+        {session.isForumAdmin && post.authorId !== session.userId ? (
+          <div className="card" style={{ marginTop: "0.8rem" }}>
+            <p className="meta" style={{ marginTop: 0 }}>
+              管理员操作
+            </p>
+            <form className="stack" action="/api/intranet/forum/moderation/posts" method="post">
+              <input type="hidden" name="postId" value={post.id} />
+              <label>
+                删除理由（必填）
+                <textarea name="reason" required />
+              </label>
+              <button className="btn btn-neutral" type="submit">
+                删除该帖子（含全部附件）
+              </button>
+            </form>
+          </div>
+        ) : null}
       </section>
 
       <section className="section">
         <h2>回帖</h2>
-        <form className="stack" action="/api/intranet/forum/replies" method="post" encType="multipart/form-data">
+        <AsyncSubmitForm
+          className="stack"
+          action="/api/intranet/forum/replies"
+          encType="multipart/form-data"
+          submitText="发布回帖"
+          workingText="正在回帖..."
+        >
           <input type="hidden" name="postId" value={post.id} />
           <label>
             内容
@@ -74,10 +111,7 @@ export default async function ForumPostPage({ params, searchParams }: Props) {
             附件（可选，支持图片/视频/文件，支持多选）
             <input type="file" name="attachments" multiple />
           </label>
-          <button className="btn btn-primary" type="submit">
-            发布回帖
-          </button>
-        </form>
+        </AsyncSubmitForm>
       </section>
 
       <section className="section">
@@ -92,6 +126,24 @@ export default async function ForumPostPage({ params, searchParams }: Props) {
                   {reply.createdAt.toLocaleString("zh-CN")}
                 </p>
                 {reply.attachments.length > 0 ? <AttachmentList attachments={reply.attachments} /> : null}
+                {session.isForumAdmin ? (
+                  <div className="stack" style={{ marginTop: "0.6rem" }}>
+                    {reply.attachments.map((attachment) => (
+                      <form
+                        key={attachment.id}
+                        className="row"
+                        action="/api/intranet/forum/moderation/attachments"
+                        method="post"
+                      >
+                        <input type="hidden" name="attachmentId" value={attachment.id} />
+                        <input name="reason" placeholder={`删除附件 ${attachment.name} 的理由`} required />
+                        <button className="btn btn-neutral" type="submit">
+                          删除附件
+                        </button>
+                      </form>
+                    ))}
+                  </div>
+                ) : null}
               </article>
             ))
           ) : (

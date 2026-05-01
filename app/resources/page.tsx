@@ -7,7 +7,8 @@ export default async function ResourcesPage() {
   const resources = await db.resource.findMany({
     orderBy: { publishedAt: "desc" },
     include: {
-      publishedBy: { select: { displayName: true } }
+      publishedBy: { select: { displayName: true } },
+      publishedByIntranet: { select: { name: true } }
     }
   });
 
@@ -22,7 +23,8 @@ export default async function ResourcesPage() {
               <h3>{item.title}</h3>
               <p className="meta">{item.description}</p>
               <p className="meta">
-                类型：{resourceTypeLabels[item.type]} ｜ 发布人：{item.publishedBy.displayName}
+                类型：{resourceTypeLabels[item.type]} ｜ 发布人：
+                {item.publishedByIntranet?.name ?? item.publishedBy?.displayName ?? "未知"}
               </p>
               <a href={item.fileUrl} className="btn btn-neutral" target="_blank" rel="noreferrer">
                 下载：{item.fileName ?? "资料文件"}

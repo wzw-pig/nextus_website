@@ -5,7 +5,7 @@ import { getAdminSessionFromRequest, hashPassword } from "@/lib/auth";
 export const runtime = "nodejs";
 
 function toDashboard(request: NextRequest, query: string) {
-  return NextResponse.redirect(new URL(`/admin/dashboard?${query}`, request.url));
+  return NextResponse.redirect(new URL(`/admin/dashboard/profile?${query}`, request.url));
 }
 
 export async function POST(request: NextRequest) {

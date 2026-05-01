@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 const departmentValues = new Set(Object.values(Department));
 
 function toDashboard(request: NextRequest, query: string) {
-  return NextResponse.redirect(new URL(`/admin/dashboard?${query}`, request.url));
+  return NextResponse.redirect(new URL(`/admin/dashboard/intranet-users?${query}`, request.url));
 }
 
 export async function POST(request: NextRequest) {
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
   const employeeId = String(formData.get("employeeId") ?? "").trim();
   const contact = String(formData.get("contact") ?? "").trim();
   const canApproveFinance = formData.get("canApproveFinance") === "on";
+  const isForumAdmin = formData.get("isForumAdmin") === "on";
   const isActive = formData.get("isActive") === "on";
 
   if (!name || !employeeId || !contact) {
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
         employeeId,
         contact,
         canApproveFinance,
+        isForumAdmin,
         isActive: true,
         createdById: session.userId
       }
@@ -92,6 +94,7 @@ export async function POST(request: NextRequest) {
       employeeId,
       contact,
       canApproveFinance,
+      isForumAdmin,
       isActive,
       ...(password ? { passwordHash: await hashPassword(password) } : {})
     }

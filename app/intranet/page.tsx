@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getIntranetSessionFromCookies } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { IntranetNav } from "@/components/intranet-nav";
 import { departmentLabels } from "@/lib/constants";
 
@@ -11,6 +12,9 @@ type Props = {
 export default async function IntranetHomePage({ searchParams }: Props) {
   const session = await getIntranetSessionFromCookies();
   if (!session) redirect("/intranet/login?error=请先登录内网");
+  const unreadCount = await db.intranetMessage.count({
+    where: { recipientId: session.userId, isRead: false }
+  });
 
   return (
     <>
@@ -21,6 +25,7 @@ export default async function IntranetHomePage({ searchParams }: Props) {
             <p className="meta">
               欢迎，{session.displayName} ｜ {departmentLabels[session.department]} ｜ 工号：{session.employeeId}
             </p>
+            <p className="meta">站内信未读：{unreadCount} 条</p>
           </div>
           <IntranetNav />
         </div>
@@ -53,10 +58,24 @@ export default async function IntranetHomePage({ searchParams }: Props) {
             </Link>
           </div>
           <div className="card">
+            <h3>资料发布</h3>
+            <p className="meta">在内网发布资料文件并提供下载。</p>
+            <Link href="/intranet/resources" className="btn btn-neutral">
+              进入资料发布
+            </Link>
+          </div>
+          <div className="card">
             <h3>财务审批</h3>
             <p className="meta">可提交采购与经费申请、跟踪审批进度，审批通过后显示审批人完整信息。</p>
             <Link href="/intranet/finance" className="btn btn-neutral">
               进入财务审批
+            </Link>
+          </div>
+          <div className="card">
+            <h3>站内信</h3>
+            <p className="meta">管理员删除通知等系统消息会在站内信展示。</p>
+            <Link href="/intranet/mailbox" className="btn btn-neutral">
+              查看站内信
             </Link>
           </div>
         </div>

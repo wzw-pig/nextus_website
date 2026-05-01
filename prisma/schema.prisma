@@ -49,7 +49,7 @@ model AdminUser {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   publishedNews    News[]
-  publishedDocs    Resource[]
+  publishedDocs    Resource[]     @relation("AdminResourcePublisher")
   uploadedAttachments Attachment[] @relation("AdminAttachmentUploader")
   createdEmployees IntranetUser[] @relation("IntranetCreatedBy")
 }
@@ -63,6 +63,7 @@ model IntranetUser {
   employeeId        String           @unique
   contact           String
   canApproveFinance Boolean          @default(false)
+  isForumAdmin      Boolean          @default(false)
   isActive          Boolean          @default(true)
   createdById       String?
   createdBy         AdminUser?       @relation("IntranetCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -71,6 +72,8 @@ model IntranetUser {
   posts             ForumPost[]
   replies           ForumReply[]
   uploadedAttachments Attachment[]   @relation("IntranetAttachmentUploader")
+  publishedResources Resource[]      @relation("IntranetResourcePublisher")
+  receivedMessages   IntranetMessage[]
   financeRequests   FinanceRequest[] @relation("FinanceRequester")
   assignedRequests  FinanceRequest[] @relation("FinanceApprover")
 }
@@ -101,8 +104,10 @@ model Resource {
   fileUrl       String
   publishedAt   DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
-  publishedById String
-  publishedBy   AdminUser    @relation(fields: [publishedById], references: [id], onDelete: Restrict)
+  publishedById String?
+  publishedBy   AdminUser?   @relation("AdminResourcePublisher", fields: [publishedById], references: [id], onDelete: SetNull)
+  publishedByIntranetId String?
+  publishedByIntranet   IntranetUser? @relation("IntranetResourcePublisher", fields: [publishedByIntranetId], references: [id], onDelete: SetNull)
 
   @@index([publishedAt])
 }
@@ -185,6 +190,19 @@ model FinanceRequest {
   requester       IntranetUser  @relation("FinanceRequester", fields: [requesterId], references: [id], onDelete: Restrict)
   approverId      String
   approver        IntranetUser  @relation("FinanceApprover", fields: [approverId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+}
+
+model IntranetMessage {
+  id          String       @id @default(cuid())
+  title       String
+  content     String
+  senderName  String       @default("系统")
+  isRead      Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  recipientId String
+  recipient   IntranetUser @relation(fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
 }

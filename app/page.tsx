@@ -13,7 +13,10 @@ export default async function HomePage() {
     }),
     db.resource.findMany({
       orderBy: { publishedAt: "desc" },
-      include: { publishedBy: { select: { displayName: true } } },
+      include: {
+        publishedBy: { select: { displayName: true } },
+        publishedByIntranet: { select: { name: true } }
+      },
       take: 6
     })
   ]);
@@ -137,7 +140,8 @@ export default async function HomePage() {
                 <h3>{item.title}</h3>
                 <p className="meta">{item.description}</p>
                 <p className="meta">
-                  类型：{resourceTypeLabels[item.type]} ｜ 发布人：{item.publishedBy.displayName}
+                  类型：{resourceTypeLabels[item.type]} ｜ 发布人：
+                  {item.publishedByIntranet?.name ?? item.publishedBy?.displayName ?? "未知"}
                 </p>
                 <a className="btn btn-neutral" href={item.fileUrl} target="_blank" rel="noreferrer">
                   下载：{item.fileName ?? "资料文件"}

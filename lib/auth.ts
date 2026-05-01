@@ -22,6 +22,7 @@ export type IntranetSessionPayload = SessionPayloadBase & {
   kind: "intranet";
   department: Department;
   canApproveFinance: boolean;
+  isForumAdmin: boolean;
   employeeId: string;
   contact: string;
 };

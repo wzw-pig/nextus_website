@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getIntranetSessionFromCookies } from "@/lib/auth";
 import { IntranetNav } from "@/components/intranet-nav";
+import { AsyncSubmitForm } from "@/components/async-submit-form";
 import { ensureForumCategories } from "@/lib/forum";
 import { departmentLabels } from "@/lib/constants";
 
@@ -47,7 +48,13 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
 
       <section className="section">
         <h2>发布新帖</h2>
-        <form className="stack" action="/api/intranet/forum/posts" method="post" encType="multipart/form-data">
+        <AsyncSubmitForm
+          className="stack"
+          action="/api/intranet/forum/posts"
+          encType="multipart/form-data"
+          submitText="发布帖子"
+          workingText="正在发帖..."
+        >
           <input type="hidden" name="categorySlug" value={category.slug} />
           <label>
             标题
@@ -61,10 +68,7 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
             附件（可选，支持图片/视频/文件，支持多选）
             <input type="file" name="attachments" multiple />
           </label>
-          <button className="btn btn-primary" type="submit">
-            发布帖子
-          </button>
-        </form>
+        </AsyncSubmitForm>
       </section>
 
       <section className="section">
