@@ -65,6 +65,13 @@ export default async function IntranetHomePage({ searchParams }: Props) {
             </Link>
           </div>
           <div className="card">
+            <h3>十楼使用预约</h3>
+            <p className="meta">查看未来7天十楼教工小家可用时间并发起预约。</p>
+            <Link href="/intranet/floor-reservations" className="btn btn-neutral">
+              进入预约
+            </Link>
+          </div>
+          <div className="card">
             <h3>财务审批</h3>
             <p className="meta">可提交采购与经费申请、跟踪审批进度，审批通过后显示审批人完整信息。</p>
             <Link href="/intranet/finance" className="btn btn-neutral">

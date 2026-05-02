@@ -1,4 +1,4 @@
-import { Department, ResourceType } from "@prisma/client";
+import { Department, FloorTimeSlot, ResourceType } from "@prisma/client";
 
 export const departments = [
   {
@@ -78,3 +78,13 @@ export const resourceTypeLabels: Record<ResourceType, string> = {
 export const departmentLabels: Record<Department, string> = Object.fromEntries(
   departments.map((item) => [item.value, item.name])
 ) as Record<Department, string>;
+
+export const floorTimeSlotLabels: Record<FloorTimeSlot, string> = {
+  S0800_1000: "8:00-10:00",
+  S1000_1200: "10:00-12:00",
+  S1200_1400: "12:00-14:00",
+  S1400_1600: "14:00-16:00",
+  S1600_1800: "16:00-18:00",
+  S1800_2000: "18:00-20:00",
+  S2000_2200: "20:00-22:00"
+};

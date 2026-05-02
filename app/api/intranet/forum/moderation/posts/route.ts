@@ -13,7 +13,7 @@ function toPost(request: NextRequest, postId: string, query: string) {
 export async function POST(request: NextRequest) {
   const session = await getIntranetSessionFromRequest(request);
   if (!session) return NextResponse.redirect(new URL("/intranet/login?error=请先登录内网", request.url));
-  if (!session.isForumAdmin) return NextResponse.redirect(new URL("/intranet/forum?error=仅论坛管理员可执行删除", request.url));
+  if (!session.isForumAdmin) return NextResponse.redirect(new URL("/intranet/forum?error=仅内网管理员可执行删除", request.url));
 
   const formData = await request.formData();
   const postId = String(formData.get("postId") ?? "");
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
   });
   if (!post) return NextResponse.redirect(new URL("/intranet/forum?error=帖子不存在", request.url));
-  if (post.authorId === session.userId) return toPost(request, postId, "error=论坛管理员不可删除自己发布的帖子");
+  if (post.authorId === session.userId) return toPost(request, postId, "error=内网管理员不可删除自己发布的帖子");
 
   const attachmentUrls = [...post.attachments, ...post.replies.flatMap((reply) => reply.attachments)].map((item) => item.url);
   await Promise.allSettled(attachmentUrls.map((url) => deleteBlobByUrl(url)));

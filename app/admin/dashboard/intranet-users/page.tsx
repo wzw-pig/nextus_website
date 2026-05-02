@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getAdminSessionFromCookies } from "@/lib/auth";
 import { AdminNav } from "@/components/admin-nav";
 import { AdminIntranetImporter } from "@/components/admin-intranet-importer";
+import { AdminIntranetBulkEditor } from "@/components/admin-intranet-bulk-editor";
 import { departmentLabels } from "@/lib/constants";
 
 type Props = {
@@ -114,7 +115,7 @@ export default async function AdminIntranetUsersPage({ searchParams }: Props) {
               <input type="checkbox" name="canApproveFinance" style={{ width: "auto" }} /> 允许作为财务审批人
             </label>
             <label>
-              <input type="checkbox" name="isForumAdmin" style={{ width: "auto" }} /> 论坛管理员
+              <input type="checkbox" name="isForumAdmin" style={{ width: "auto" }} /> 内网管理员
             </label>
           </div>
           <button className="btn btn-primary" type="submit">
@@ -138,10 +139,10 @@ export default async function AdminIntranetUsersPage({ searchParams }: Props) {
               <tr>
                 <th>勾选</th>
                 <th>账号</th>
-                <th>姓名/部门</th>
-                <th>工号/联系方式</th>
-                <th>权限与状态</th>
-                <th>操作</th>
+                <th>姓名</th>
+                <th>工号</th>
+                <th>手机号</th>
+                <th>权限概览</th>
               </tr>
             </thead>
             <tbody>
@@ -151,74 +152,12 @@ export default async function AdminIntranetUsersPage({ searchParams }: Props) {
                     <input type="checkbox" name="ids" value={user.id} form="batchDeleteForm" style={{ width: "auto" }} />
                   </td>
                   <td>{user.username}</td>
+                  <td>{user.name}</td>
+                  <td>{user.employeeId}</td>
+                  <td>{user.contact}</td>
                   <td>
-                    {user.name}
-                    <br />
-                    {departmentLabels[user.department]}
-                  </td>
-                  <td>
-                    {user.employeeId}
-                    <br />
-                    {user.contact}
-                  </td>
-                  <td>
-                    {user.canApproveFinance ? "审批用户" : "普通用户"}
-                    <br />
-                    {user.isForumAdmin ? "论坛管理员" : "论坛普通用户"}
-                    <br />
+                    {user.canApproveFinance ? "审批用户" : "普通用户"} ｜ {user.isForumAdmin ? "内网管理员" : "内网普通用户"} ｜{" "}
                     {user.isActive ? "启用" : "禁用"}
-                  </td>
-                  <td>
-                    <form className="stack" action="/api/admin/intranet-users" method="post">
-                      <input type="hidden" name="action" value="update" />
-                      <input type="hidden" name="id" value={user.id} />
-                      <input name="name" defaultValue={user.name} required />
-                      <select name="department" defaultValue={user.department}>
-                        {Object.entries(departmentLabels).map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                      <input name="contact" defaultValue={user.contact} required />
-                      <input name="employeeId" defaultValue={user.employeeId} required />
-                      <label>
-                        <input
-                          type="checkbox"
-                          name="canApproveFinance"
-                          defaultChecked={user.canApproveFinance}
-                          style={{ width: "auto" }}
-                        />
-                        审批权限
-                      </label>
-                      <label>
-                        <input
-                          type="checkbox"
-                          name="isForumAdmin"
-                          defaultChecked={user.isForumAdmin}
-                          style={{ width: "auto" }}
-                        />
-                        论坛管理员
-                      </label>
-                      <label>
-                        <input type="checkbox" name="isActive" defaultChecked={user.isActive} style={{ width: "auto" }} />
-                        账号启用
-                      </label>
-                      <label>
-                        重置密码（可选）
-                        <input type="password" name="password" minLength={8} />
-                      </label>
-                      <button className="btn btn-neutral" type="submit">
-                        保存修改
-                      </button>
-                    </form>
-                    <form action="/api/admin/intranet-users" method="post" style={{ marginTop: "0.5rem" }}>
-                      <input type="hidden" name="action" value="delete" />
-                      <input type="hidden" name="id" value={user.id} />
-                      <button className="btn btn-neutral" type="submit">
-                        删除
-                      </button>
-                    </form>
                   </td>
                 </tr>
               ))}
@@ -232,6 +171,21 @@ export default async function AdminIntranetUsersPage({ searchParams }: Props) {
             </tbody>
           </table>
         </div>
+        <h3 style={{ marginTop: "0.9rem" }}>批量编辑（底部统一保存）</h3>
+        <AdminIntranetBulkEditor
+          departmentLabels={departmentLabels}
+          users={intranetUsers.map((item) => ({
+            id: item.id,
+            username: item.username,
+            name: item.name,
+            department: item.department,
+            employeeId: item.employeeId,
+            contact: item.contact,
+            canApproveFinance: item.canApproveFinance,
+            isForumAdmin: item.isForumAdmin,
+            isActive: item.isActive
+          }))}
+        />
       </section>
     </>
   );

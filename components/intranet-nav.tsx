@@ -12,6 +12,9 @@ export function IntranetNav() {
       <Link href="/intranet/resources" className="btn btn-neutral">
         资料发布
       </Link>
+      <Link href="/intranet/floor-reservations" className="btn btn-neutral">
+        十楼使用预约
+      </Link>
       <Link href="/intranet/mailbox" className="btn btn-neutral">
         站内信
       </Link>

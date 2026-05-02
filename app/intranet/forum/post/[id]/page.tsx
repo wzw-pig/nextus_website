@@ -61,17 +61,19 @@ export default async function ForumPostPage({ params, searchParams }: Props) {
             </p>
           )}
           {session.isForumAdmin ? (
-            <div className="stack" style={{ marginTop: "0.6rem" }}>
+            <form className="stack" style={{ marginTop: "0.6rem" }} action="/api/intranet/forum/moderation/attachments" method="post">
               {post.attachments.map((attachment) => (
-                <form key={attachment.id} className="row" action="/api/intranet/forum/moderation/attachments" method="post">
-                  <input type="hidden" name="attachmentId" value={attachment.id} />
-                  <input name="reason" placeholder={`删除附件 ${attachment.name} 的理由`} required />
-                  <button className="btn btn-neutral" type="submit">
-                    删除附件
-                  </button>
-                </form>
+                <label key={attachment.id}>
+                  <input type="checkbox" name="attachmentIds" value={attachment.id} style={{ width: "auto" }} /> {attachment.name}
+                </label>
               ))}
-            </div>
+              {post.attachments.length > 0 ? <input name="reason" placeholder="批量删除附件理由（必填）" required /> : null}
+              {post.attachments.length > 0 ? (
+                <button className="btn btn-neutral" type="submit">
+                  批量删除勾选附件
+                </button>
+              ) : null}
+            </form>
           ) : null}
         </div>
         {session.isForumAdmin && post.authorId !== session.userId ? (
@@ -127,22 +129,20 @@ export default async function ForumPostPage({ params, searchParams }: Props) {
                 </p>
                 {reply.attachments.length > 0 ? <AttachmentList attachments={reply.attachments} /> : null}
                 {session.isForumAdmin ? (
-                  <div className="stack" style={{ marginTop: "0.6rem" }}>
+                  <form className="stack" style={{ marginTop: "0.6rem" }} action="/api/intranet/forum/moderation/attachments" method="post">
                     {reply.attachments.map((attachment) => (
-                      <form
-                        key={attachment.id}
-                        className="row"
-                        action="/api/intranet/forum/moderation/attachments"
-                        method="post"
-                      >
-                        <input type="hidden" name="attachmentId" value={attachment.id} />
-                        <input name="reason" placeholder={`删除附件 ${attachment.name} 的理由`} required />
-                        <button className="btn btn-neutral" type="submit">
-                          删除附件
-                        </button>
-                      </form>
+                      <label key={attachment.id}>
+                        <input type="checkbox" name="attachmentIds" value={attachment.id} style={{ width: "auto" }} />{" "}
+                        {attachment.name}
+                      </label>
                     ))}
-                  </div>
+                    {reply.attachments.length > 0 ? <input name="reason" placeholder="批量删除附件理由（必填）" required /> : null}
+                    {reply.attachments.length > 0 ? (
+                      <button className="btn btn-neutral" type="submit">
+                        批量删除该回帖勾选附件
+                      </button>
+                    ) : null}
+                  </form>
                 ) : null}
               </article>
             ))

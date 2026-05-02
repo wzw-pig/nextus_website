@@ -37,6 +37,16 @@ enum FinanceStatus {
   REJECTED
 }
 
+enum FloorTimeSlot {
+  S0800_1000
+  S1000_1200
+  S1200_1400
+  S1400_1600
+  S1600_1800
+  S1800_2000
+  S2000_2200
+}
+
 model AdminUser {
   id               String       @id @default(cuid())
   username         String       @unique
@@ -74,6 +84,7 @@ model IntranetUser {
   uploadedAttachments Attachment[]   @relation("IntranetAttachmentUploader")
   publishedResources Resource[]      @relation("IntranetResourcePublisher")
   receivedMessages   IntranetMessage[]
+  floorReservations  FloorReservation[]
   financeRequests   FinanceRequest[] @relation("FinanceRequester")
   assignedRequests  FinanceRequest[] @relation("FinanceApprover")
 }
@@ -205,4 +216,18 @@ model IntranetMessage {
   recipient   IntranetUser @relation(fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
+}
+
+model FloorReservation {
+  id        String       @id @default(cuid())
+  date      DateTime
+  slot      FloorTimeSlot
+  reason    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  userId    String
+  user      IntranetUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([date])
+  @@unique([date, slot])
 }
