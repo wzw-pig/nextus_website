@@ -29,7 +29,7 @@ function isImageFile(file: File) {
   return ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"].includes(ext);
 }
 
-type BlobFolder = "news" | "forum" | "news-cover" | "resource";
+type BlobFolder = "news" | "forum" | "news-cover" | "resource" | "training" | "homepage" | "project" | "achievement" | "team-style" | "org-member" | "org-department" | "teacher" | "teacher-avatar" | "competition-photo" | "contact-item";
 
 export async function uploadSingleFileToBlob(file: File, folder: BlobFolder): Promise<UploadedAttachment> {
   const token = getBlobToken();
@@ -61,7 +61,10 @@ export async function uploadImageToBlob(file: File, folder: "news-cover"): Promi
   return uploadSingleFileToBlob(file, folder);
 }
 
-export async function uploadAttachmentsToBlob(files: File[], folder: "news" | "forum"): Promise<UploadedAttachment[]> {
+export async function uploadAttachmentsToBlob(
+  files: File[],
+  folder: "news" | "forum" | "training"
+): Promise<UploadedAttachment[]> {
   return Promise.all(files.map((file) => uploadSingleFileToBlob(file, folder)));
 }
 

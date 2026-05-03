@@ -8,7 +8,8 @@ async function main() {
     data: [
       { name: "求助答疑", slug: "help" },
       { name: "部门公告", slug: "announcements" },
-      { name: "质询建议", slug: "suggestions" }
+      { name: "质询建议", slug: "suggestions" },
+      { name: "资料发布", slug: "resources" }
     ],
     skipDuplicates: true
   });

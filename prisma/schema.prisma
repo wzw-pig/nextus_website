@@ -47,6 +47,12 @@ enum FloorTimeSlot {
   S2000_2200
 }
 
+enum HomeModule {
+  PROJECT
+  ACHIEVEMENT
+  TEAM_STYLE
+}
+
 model AdminUser {
   id               String       @id @default(cuid())
   username         String       @unique
@@ -85,6 +91,7 @@ model IntranetUser {
   publishedResources Resource[]      @relation("IntranetResourcePublisher")
   receivedMessages   IntranetMessage[]
   floorReservations  FloorReservation[]
+  updatedTrainings   TrainingContent[]   @relation("TrainingUpdatedBy")
   financeRequests   FinanceRequest[] @relation("FinanceRequester")
   assignedRequests  FinanceRequest[] @relation("FinanceApprover")
 }
@@ -230,4 +237,181 @@ model FloorReservation {
 
   @@index([date])
   @@unique([date, slot])
+}
+
+model TrainingContent {
+  id          String              @id @default(cuid())
+  key         String              @unique
+  content     String              @default("")
+  updatedAt   DateTime            @updatedAt
+  updatedById String
+  updatedBy   IntranetUser        @relation("TrainingUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  attachments TrainingAttachment[]
+}
+
+model TrainingAttachment {
+  id         String          @id @default(cuid())
+  name       String
+  url        String
+  mimeType   String?
+  size       Int?
+  createdAt  DateTime        @default(now())
+  contentId  String
+  content    TrainingContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteVisitDaily {
+  id    String   @id @default(cuid())
+  date  DateTime @unique
+  count Int      @default(0)
+}
+
+model HomeContentItem {
+  id          String     @id @default(cuid())
+  module      HomeModule
+  title       String
+  description String
+  imageUrl    String
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([module, sortOrder])
+}
+
+// ========== 新增首页内容管理模型 ==========
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  authors     String   @default("")
+  techStack   String   @default("")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  images      ProjectImage[]
+  awards      ProjectAward[]
+
+  @@index([sortOrder])
+}
+
+model ProjectImage {
+  id        String  @id @default(cuid())
+  url       String
+  sortOrder Int     @default(0)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ProjectAward {
+  id        String  @id @default(cuid())
+  date      String
+  name      String
+  sortOrder Int     @default(0)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Achievement {
+  id        String  @id @default(cuid())
+  name      String
+  imageUrl  String
+  orientation String @default("landscape")
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+model TeamStyleImage {
+  id        String  @id @default(cuid())
+  imageUrl  String
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([sortOrder])
+}
+
+model OrgMember {
+  id        String  @id @default(cuid())
+  name      String
+  position  String
+  department String @default("")
+  avatarUrl String  @default("")
+  parentId  String?
+  parent    OrgMember?  @relation("OrgHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  OrgMember[] @relation("OrgHierarchy")
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([sortOrder])
+}
+
+model OrgDepartment {
+  id          String  @id @default(cuid())
+  name        String
+  description String
+  imageUrl    String  @default("")
+  sortOrder   Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+model Teacher {
+  id          String  @id @default(cuid())
+  name        String
+  position    String  @default("")
+  college     String  @default("")
+  major       String  @default("")
+  bio         String  @default("")
+  achievements String @default("")
+  expertise   String  @default("")
+  avatarUrl   String  @default("")
+  sortOrder   Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  images      TeacherImage[]
+
+  @@index([sortOrder])
+}
+
+model TeacherImage {
+  id        String  @id @default(cuid())
+  url       String
+  sortOrder Int     @default(0)
+  teacherId String
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+}
+
+model CompetitionPhoto {
+  id        String  @id @default(cuid())
+  imageUrl  String
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([sortOrder])
+}
+
+model ContactItem {
+  id        String  @id @default(cuid())
+  title     String  @default("")
+  content   String  @default("")
+  imageUrl  String  @default("")
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
 }

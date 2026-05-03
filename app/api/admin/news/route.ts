@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         title,
         summary,
         content,
-        coverImageUrl: coverImage?.url || "/logo.svg",
+        coverImageUrl: coverImage?.url || "/logo.png",
         publishedById: session.userId,
         attachments: uploadedAttachments.length
           ? {

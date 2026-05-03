@@ -65,7 +65,8 @@ export const departmentBySlug = Object.fromEntries(departments.map((item) => [it
 export const forumCategoryPresets = [
   { name: "求助答疑", slug: "help" },
   { name: "部门公告", slug: "announcements" },
-  { name: "质询建议", slug: "suggestions" }
+  { name: "质询建议", slug: "suggestions" },
+  { name: "资料发布", slug: "resources" }
 ] as const;
 
 export const resourceTypeLabels: Record<ResourceType, string> = {

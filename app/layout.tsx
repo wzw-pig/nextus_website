@@ -1,22 +1,34 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { recordWebsiteVisit } from "@/lib/visit";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Nextus 团队官网",
-  description: "Nextus 学生科创团队官网与内网管理平台"
+  title: "NextUs 永远的我们",
+  description: "NextUs 学生竞赛团队官网与内网管理平台"
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headerStore = headers();
+  await recordWebsiteVisit({
+    host: headerStore.get("x-forwarded-host") ?? headerStore.get("host"),
+    method: headerStore.get("x-http-method-override"),
+    purpose: headerStore.get("purpose") ?? headerStore.get("sec-purpose"),
+    pathname: headerStore.get("next-url")
+  });
+
   return (
     <html lang="zh-CN">
       <body>
-        <SiteHeader />
-        <main>
-          <div className="container">{children}</div>
-        </main>
-        <SiteFooter />
+        <div className="app-root">
+          <SiteHeader />
+          <main>
+            {children}
+          </main>
+          <SiteFooter />
+        </div>
       </body>
     </html>
   );

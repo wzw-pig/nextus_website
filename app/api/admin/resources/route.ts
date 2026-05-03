@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 const typeValues = new Set(Object.values(ResourceType));
 
 function toDashboard(request: NextRequest, query: string) {
-  return NextResponse.redirect(new URL(`/admin/dashboard?${query}`, request.url));
+  return NextResponse.redirect(new URL(`/admin/dashboard/resources?${query}`, request.url));
 }
 
 export async function POST(request: NextRequest) {

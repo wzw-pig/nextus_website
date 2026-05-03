@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 400 400">
+  <!-- PCB-style circuit: orthogonal traces with rounded corners, pads, and vias -->
+  <defs>
+    <style>
+      .trace1 { stroke: #0ea5e9; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: 0.55; fill: none; }
+      .trace2 { stroke: #38bdf8; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0.65; fill: none; }
+      .bus { stroke: #22d3ee; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: 0.45; fill: none; }
+      .via-ring { fill: #f8fafc; stroke: #60a5fa; stroke-width: 1.2; opacity: 0.8; }
+      .pad { fill: #e0f2fe; stroke: #93c5fd; stroke-width: 0.8; opacity: 0.8; rx: 1.5; ry: 1.5; }
+      .grid { stroke: #bfdbfe; stroke-width: 0.6; opacity: 0.18; }
+    </style>
+    <!-- simple seamless background grid to hint PCB substrate -->
+    <pattern id="bgGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M0 0H40 M0 0V40" class="grid" />
+    </pattern>
+  </defs>
+
+  <rect x="0" y="0" width="400" height="400" fill="url(#bgGrid)" />
+
+  <!-- Horizontal buses -->
+  <path class="bus" d="M20 60 H180 V90 H350"/>
+  <path class="bus" d="M50 200 H300 V230 H380"/>
+  <path class="bus" d="M30 320 H170 V300 H360"/>
+
+  <!-- Vertical buses -->
+  <path class="bus" d="M90 30 V120 H130 V370"/>
+  <path class="bus" d="M250 20 V80 H210 V360"/>
+
+  <!-- Secondary traces (thinner) -->
+  <path class="trace2" d="M20 110 H120 V130 H200 V90 H260 V60"/>
+  <path class="trace2" d="M340 100 H260 V160 H140 V220 H60"/>
+  <path class="trace2" d="M300 260 H220 V280 H160 V340 H100"/>
+  <path class="trace2" d="M70 260 V180 H110 V160 H150"/>
+
+  <!-- Primary traces (thicker) with rounded corners -->
+  <path class="trace1" d="M40 40 H140 V80 H220 V140 H320"/>
+  <path class="trace1" d="M80 300 H140 V260 H200 V220 H300 V180"/>
+  <path class="trace1" d="M360 60 H300 V110 H260 V150 H180 V200 H100 V260 H60"/>
+
+  <!-- Vias (annular rings) placed along intersections -->
+  <circle class="via-ring" cx="140" cy="80" r="4.2"/>
+  <circle class="via-ring" cx="220" cy="140" r="4.2"/>
+  <circle class="via-ring" cx="260" cy="160" r="3.8"/>
+  <circle class="via-ring" cx="180" cy="200" r="3.8"/>
+  <circle class="via-ring" cx="140" cy="260" r="3.8"/>
+  <circle class="via-ring" cx="300" cy="110" r="4.0"/>
+  <circle class="via-ring" cx="250" cy="80" r="3.6"/>
+  <circle class="via-ring" cx="110" cy="160" r="3.6"/>
+  <circle class="via-ring" cx="170" cy="300" r="3.6"/>
+
+  <!-- IC-like pad arrays with feeder traces -->
+  <!-- Top-left IC -->
+  <g transform="translate(60,20)">
+    <rect class="pad" x="0" y="0" width="32" height="22" rx="3" ry="3"/>
+    <rect class="pad" x="-10" y="-5" width="6" height="4"/>
+    <rect class="pad" x="-10" y="3" width="6" height="4"/>
+    <rect class="pad" x="-10" y="11" width="6" height="4"/>
+    <rect class="pad" x="-10" y="19" width="6" height="4"/>
+    <rect class="pad" x="36" y="-5" width="6" height="4"/>
+    <rect class="pad" x="36" y="3" width="6" height="4"/>
+    <rect class="pad" x="36" y="11" width="6" height="4"/>
+    <rect class="pad" x="36" y="19" width="6" height="4"/>
+  </g>
+  <path class="trace2" d="M50 30 H60"/>
+  <path class="trace2" d="M50 38 H60"/>
+  <path class="trace2" d="M50 46 H60"/>
+  <path class="trace2" d="M50 54 H60"/>
+
+  <!-- Right-side header pads -->
+  <g transform="translate(330,140)">
+    <rect class="pad" x="0" y="0" width="30" height="60" rx="3" ry="3"/>
+    <rect class="pad" x="-6" y="6" width="4" height="8"/>
+    <rect class="pad" x="-6" y="20" width="4" height="8"/>
+    <rect class="pad" x="-6" y="34" width="4" height="8"/>
+    <rect class="pad" x="-6" y="48" width="4" height="8"/>
+  </g>
+  <path class="trace1" d="M324 146 H300 V160"/>
+  <path class="trace1" d="M324 170 H280 V190 H230"/>
+  <path class="trace1" d="M324 194 H290 V230"/>
+
+  <!-- Bottom-left components -->
+  <g transform="translate(30,320)">
+    <rect class="pad" x="0" y="0" width="60" height="24" rx="4" ry="4"/>
+    <rect class="pad" x="-8" y="5" width="6" height="6"/>
+    <rect class="pad" x="62" y="5" width="6" height="6"/>
+  </g>
+  <path class="trace2" d="M22 333 H30"/>
+  <path class="trace2" d="M98 333 H110 V300"/>
+
+  <!-- Decorative small vias -->
+  <circle class="via-ring" cx="40" cy="200" r="2.8"/>
+  <circle class="via-ring" cx="360" cy="260" r="2.8"/>
+  <circle class="via-ring" cx="300" cy="320" r="2.8"/>
+  <circle class="via-ring" cx="80" cy="100" r="2.8"/>
+</svg>

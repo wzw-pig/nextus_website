@@ -31,6 +31,7 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
   });
 
   if (!category) notFound();
+  const isResourceCategory = category.slug === "resources";
 
   return (
     <>
@@ -38,7 +39,9 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
         <div className="section-header">
           <div>
             <h2>{category.name}</h2>
-            <p className="meta">任何内网用户都可以发帖与回帖。</p>
+            <p className="meta">
+              {isResourceCategory ? "在此发布资料附件，其他用户可回帖讨论与补充。" : "任何内网用户都可以发帖与回帖。"}
+            </p>
           </div>
           <IntranetNav />
         </div>
@@ -47,7 +50,7 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
       </section>
 
       <section className="section">
-        <h2>发布新帖</h2>
+        <h2>{isResourceCategory ? "发布资料帖" : "发布新帖"}</h2>
         <AsyncSubmitForm
           className="stack"
           action="/api/intranet/forum/posts"
@@ -61,7 +64,7 @@ export default async function ForumCategoryPage({ params, searchParams }: Props)
             <input name="title" required />
           </label>
           <label>
-            内容
+            {isResourceCategory ? "资料说明" : "内容"}
             <textarea name="content" required />
           </label>
           <label>

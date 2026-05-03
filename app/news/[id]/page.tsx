@@ -20,31 +20,33 @@ export default async function NewsDetailPage({ params }: Props) {
   if (!news) notFound();
 
   return (
-    <article className="section">
-      <h2>{news.title}</h2>
-      <p className="meta">
-        发布人：{news.publishedBy.displayName} ｜ {news.publishedAt.toLocaleString("zh-CN")}
-      </p>
-      {news.coverImageUrl ? (
-        <div style={{ marginTop: "0.8rem" }}>
-          <img src={news.coverImageUrl} alt={news.title} style={{ width: "100%", borderRadius: "12px" }} />
-        </div>
-      ) : null}
-      <div className="card" style={{ marginTop: "0.8rem" }}>
-        <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{news.content}</p>
-      </div>
-      <div className="card" style={{ marginTop: "0.8rem" }}>
-        <p className="meta" style={{ marginTop: 0 }}>
-          附件下载
+    <section className="section">
+      <div className="container">
+        <h2 style={{ fontSize: "1.8rem", marginBottom: "0.8rem" }}>{news.title}</h2>
+        <p className="meta">
+          发布人：{news.publishedBy.displayName} ｜ {news.publishedAt.toLocaleString("zh-CN")}
         </p>
-        {news.attachments.length > 0 ? (
-          <AttachmentList attachments={news.attachments} />
-        ) : (
-          <p className="meta" style={{ marginBottom: 0 }}>
-            暂无附件
+        {news.coverImageUrl ? (
+          <div style={{ marginTop: "0.8rem" }}>
+            <img src={news.coverImageUrl} alt={news.title} style={{ width: "100%", borderRadius: "12px" }} />
+          </div>
+        ) : null}
+        <div className="card" style={{ marginTop: "0.8rem" }}>
+          <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{news.content}</p>
+        </div>
+        <div className="card" style={{ marginTop: "0.8rem" }}>
+          <p className="meta" style={{ marginTop: 0 }}>
+            附件下载
           </p>
-        )}
+          {news.attachments.length > 0 ? (
+            <AttachmentList attachments={news.attachments} />
+          ) : (
+            <p className="meta" style={{ marginBottom: 0 }}>
+              暂无附件
+            </p>
+          )}
+        </div>
       </div>
-    </article>
+    </section>
   );
 }

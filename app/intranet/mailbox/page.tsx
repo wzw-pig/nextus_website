@@ -9,6 +9,11 @@ export default async function IntranetMailboxPage() {
   const session = await getIntranetSessionFromCookies();
   if (!session) redirect("/intranet/login?error=请先登录内网");
 
+  await db.intranetMessage.updateMany({
+    where: { recipientId: session.userId, isRead: false },
+    data: { isRead: true }
+  });
+
   const messages = await db.intranetMessage.findMany({
     where: { recipientId: session.userId },
     orderBy: { createdAt: "desc" }
@@ -34,6 +39,7 @@ export default async function IntranetMailboxPage() {
                 <p className="meta">
                   发件方：{msg.senderName} ｜ {msg.createdAt.toLocaleString("zh-CN")}
                 </p>
+                <p className="meta">状态：{msg.isRead ? "已读" : "未读"}</p>
                 <p style={{ whiteSpace: "pre-wrap", marginBottom: 0 }}>{msg.content}</p>
               </article>
             ))
