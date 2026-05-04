@@ -28,8 +28,8 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
   const homepageSections = [
     { title: "历史项目管理", desc: "多图+作者+技术栈+获奖", href: "/admin/dashboard/projects" },
     { title: "成果展示管理", desc: "横版/竖版奖状上传", href: "/admin/dashboard/achievements" },
-    { title: "团队风采管理", desc: "团队照片上传", href: "/admin/dashboard/team-style" },
     { title: "竞赛风采管理", desc: "竞赛照片上传", href: "/admin/dashboard/competition" },
+    { title: "团队生活管理", desc: "生活照片上传", href: "/admin/dashboard/team-style" },
     { title: "组织架构管理", desc: "核心管理层+部门结构", href: "/admin/dashboard/organization" },
     { title: "指导老师管理", desc: "教师信息+风采图片", href: "/admin/dashboard/teachers" },
   ];

@@ -10,11 +10,11 @@ type Props = {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminCompetitionPage({ searchParams }: Props) {
+export default async function AdminTeamStylePage({ searchParams }: Props) {
   const session = await getAdminSessionFromCookies();
   if (!session) redirect("/admin/login?error=请先登录后台");
 
-  const photos = await db.competitionPhoto.findMany({
+  const images = await db.teamStyleImage.findMany({
     orderBy: { sortOrder: "asc" }
   });
 
@@ -43,12 +43,12 @@ export default async function AdminCompetitionPage({ searchParams }: Props) {
         <div className="container">
           <h2 style={{ fontSize: "1.3rem", marginBottom: "1rem" }}>上传图片</h2>
           <AsyncSubmitForm
-            action="/api/admin/competition-photos"
+            action="/api/admin/team-style"
             className="stack"
             encType="multipart/form-data"
             submitText="上传图片"
             workingText="正在上传..."
-            successRedirect="/admin/dashboard/competition"
+            successRedirect="/admin/dashboard/team-style"
           >
             <input type="hidden" name="action" value="create" />
             <div className="row">
@@ -69,16 +69,16 @@ export default async function AdminCompetitionPage({ searchParams }: Props) {
         <div className="container">
           <h2 style={{ fontSize: "1.3rem", marginBottom: "1rem" }}>图片列表</h2>
           <div className="grid grid-3">
-            {photos.length > 0 ? (
-              photos.map((item) => (
+            {images.length > 0 ? (
+              images.map((item) => (
                 <article className="card" key={item.id}>
                   <img
                     src={item.imageUrl}
-                    alt="竞赛风采"
+                    alt="团队风采"
                     style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 10, marginBottom: "0.6rem" }}
                   />
                   <p className="meta">排序：{item.sortOrder}</p>
-                  <form action="/api/admin/competition-photos" method="post">
+                  <form action="/api/admin/team-style" method="post">
                     <input type="hidden" name="id" value={item.id} />
                     <input type="hidden" name="action" value="delete" />
                     <button className="btn btn-neutral" type="submit">
