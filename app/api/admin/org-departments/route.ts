@@ -5,13 +5,22 @@ import { uploadSingleFileToBlob, deleteBlobByUrl } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
-function toDashboard(request: NextRequest, query: string) {
-  return NextResponse.redirect(new URL(`/admin/dashboard/org-departments?${query}`, request.url));
+function isAjax(request: NextRequest) {
+  return request.headers.get("accept")?.includes("application/json") ||
+    request.headers.get("x-requested-with") === "XMLHttpRequest";
+}
+
+function toPage(request: NextRequest, query: string) {
+  if (isAjax(request)) {
+    const params = new URLSearchParams(query);
+    return NextResponse.json({ ok: !!params.get("ok"), message: params.get("ok") || params.get("error") || "" });
+  }
+  return NextResponse.redirect(new URL(`/admin/dashboard/organization?${query}`, request.url));
 }
 
 export async function POST(request: NextRequest) {
   const session = await getAdminSessionFromRequest(request);
-  if (!session) return toDashboard(request, "error=后台登录已失效");
+  if (!session) return toPage(request, "error=后台登录已失效");
 
   const formData = await request.formData();
   const action = String(formData.get("action") ?? "");
@@ -22,54 +31,31 @@ export async function POST(request: NextRequest) {
   const imageInput = formData.get("image");
   const imageFile = imageInput instanceof File && imageInput.size > 0 ? imageInput : null;
 
-  if (!["create", "update", "delete"].includes(action)) {
-    return toDashboard(request, "error=无效部门操作");
-  }
+  if (!["create", "update", "delete"].includes(action)) return toPage(request, "error=无效操作");
 
   if (action === "delete") {
-    if (!id) return toDashboard(request, "error=缺少部门ID");
+    if (!id) return toPage(request, "error=缺少ID");
     const existing = await db.orgDepartment.findUnique({ where: { id } });
-    if (existing && existing.imageUrl) await deleteBlobByUrl(existing.imageUrl);
+    if (existing && existing.imageUrl && existing.imageUrl.startsWith("http")) await deleteBlobByUrl(existing.imageUrl);
     await db.orgDepartment.delete({ where: { id } });
-    return toDashboard(request, "ok=部门已删除");
+    return toPage(request, "ok=已删除");
   }
 
-  if (!name || !description) {
-    return toDashboard(request, "error=部门名称和描述不能为空");
-  }
+  if (!name || !description) return toPage(request, "error=名称和描述不能为空");
 
   if (action === "create") {
-    const imageUrl = imageFile
-      ? (await uploadSingleFileToBlob(imageFile, "org-department")).url
-      : "";
-    await db.orgDepartment.create({
-      data: {
-        name,
-        description,
-        imageUrl,
-        sortOrder,
-      },
-    });
-    return toDashboard(request, "ok=部门创建成功");
+    const imageUrl = imageFile ? (await uploadSingleFileToBlob(imageFile, "org-department")).url : "";
+    await db.orgDepartment.create({ data: { name, description, imageUrl, sortOrder } });
+    return toPage(request, "ok=创建成功");
   }
 
-  if (!id) return toDashboard(request, "error=缺少部门ID");
-
+  if (!id) return toPage(request, "error=缺少ID");
   let imageUrl: string | undefined;
   if (imageFile) {
     const existing = await db.orgDepartment.findUnique({ where: { id } });
-    if (existing && existing.imageUrl) await deleteBlobByUrl(existing.imageUrl);
+    if (existing && existing.imageUrl && existing.imageUrl.startsWith("http")) await deleteBlobByUrl(existing.imageUrl);
     imageUrl = (await uploadSingleFileToBlob(imageFile, "org-department")).url;
   }
-
-  await db.orgDepartment.update({
-    where: { id },
-    data: {
-      name,
-      description,
-      sortOrder,
-      ...(imageUrl !== undefined ? { imageUrl } : {}),
-    },
-  });
-  return toDashboard(request, "ok=部门更新成功");
+  await db.orgDepartment.update({ where: { id }, data: { name, description, sortOrder, ...(imageUrl !== undefined ? { imageUrl } : {}) } });
+  return toPage(request, "ok=更新成功");
 }

@@ -5,8 +5,23 @@ import { uploadSingleFileToBlob, deleteBlobByUrl } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
+function isAjax(request: NextRequest) {
+  return request.headers.get("accept")?.includes("application/json") ||
+    request.headers.get("x-requested-with") === "XMLHttpRequest";
+}
+
+function jsonResponse(ok: boolean, message: string, redirectTo?: string) {
+  return NextResponse.json({ ok, message, redirectTo });
+}
+
 function toDashboard(request: NextRequest, query: string) {
-  return NextResponse.redirect(new URL(`/admin/dashboard/org-members?${query}`, request.url));
+  if (isAjax(request)) {
+    const params = new URLSearchParams(query);
+    const ok = params.get("ok");
+    const error = params.get("error");
+    return jsonResponse(!!ok, ok || error || "", "/admin/dashboard/organization");
+  }
+  return NextResponse.redirect(new URL(`/admin/dashboard/organization?${query}`, request.url));
 }
 
 export async function POST(request: NextRequest) {
@@ -31,7 +46,7 @@ export async function POST(request: NextRequest) {
   if (action === "delete") {
     if (!id) return toDashboard(request, "error=缺少组织成员ID");
     const existing = await db.orgMember.findUnique({ where: { id } });
-    if (existing && existing.avatarUrl) await deleteBlobByUrl(existing.avatarUrl);
+    if (existing && existing.avatarUrl && existing.avatarUrl.startsWith("http")) await deleteBlobByUrl(existing.avatarUrl);
     await db.orgMember.delete({ where: { id } });
     return toDashboard(request, "ok=组织成员已删除");
   }
@@ -45,14 +60,7 @@ export async function POST(request: NextRequest) {
       ? (await uploadSingleFileToBlob(avatarFile, "org-member")).url
       : "";
     await db.orgMember.create({
-      data: {
-        name,
-        position,
-        department,
-        avatarUrl,
-        parentId,
-        sortOrder,
-      },
+      data: { name, position, department, avatarUrl, parentId, sortOrder },
     });
     return toDashboard(request, "ok=组织成员创建成功");
   }
@@ -62,18 +70,14 @@ export async function POST(request: NextRequest) {
   let avatarUrl: string | undefined;
   if (avatarFile) {
     const existing = await db.orgMember.findUnique({ where: { id } });
-    if (existing && existing.avatarUrl) await deleteBlobByUrl(existing.avatarUrl);
+    if (existing && existing.avatarUrl && existing.avatarUrl.startsWith("http")) await deleteBlobByUrl(existing.avatarUrl);
     avatarUrl = (await uploadSingleFileToBlob(avatarFile, "org-member")).url;
   }
 
   await db.orgMember.update({
     where: { id },
     data: {
-      name,
-      position,
-      department,
-      parentId,
-      sortOrder,
+      name, position, department, parentId, sortOrder,
       ...(avatarUrl !== undefined ? { avatarUrl } : {}),
     },
   });

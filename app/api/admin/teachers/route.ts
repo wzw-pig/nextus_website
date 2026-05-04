@@ -5,13 +5,22 @@ import { uploadSingleFileToBlob, deleteBlobByUrl } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
-function toDashboard(request: NextRequest, query: string) {
+function isAjax(request: NextRequest) {
+  return request.headers.get("accept")?.includes("application/json") ||
+    request.headers.get("x-requested-with") === "XMLHttpRequest";
+}
+
+function toPage(request: NextRequest, query: string) {
+  if (isAjax(request)) {
+    const params = new URLSearchParams(query);
+    return NextResponse.json({ ok: !!params.get("ok"), message: params.get("ok") || params.get("error") || "" });
+  }
   return NextResponse.redirect(new URL(`/admin/dashboard/teachers?${query}`, request.url));
 }
 
 export async function POST(request: NextRequest) {
   const session = await getAdminSessionFromRequest(request);
-  if (!session) return toDashboard(request, "error=后台登录已失效");
+  if (!session) return toPage(request, "error=后台登录已失效");
 
   const formData = await request.formData();
   const action = String(formData.get("action") ?? "");
@@ -27,86 +36,49 @@ export async function POST(request: NextRequest) {
   const avatarInput = formData.get("avatar");
   const avatarFile = avatarInput instanceof File && avatarInput.size > 0 ? avatarInput : null;
 
-  if (!["create", "update", "delete"].includes(action)) {
-    return toDashboard(request, "error=无效教师操作");
-  }
+  if (!["create", "update", "delete"].includes(action)) return toPage(request, "error=无效操作");
 
   if (action === "delete") {
-    if (!id) return toDashboard(request, "error=缺少教师ID");
-    const existing = await db.teacher.findUnique({
-      where: { id },
-      include: { images: true },
-    });
+    if (!id) return toPage(request, "error=缺少ID");
+    const existing = await db.teacher.findUnique({ where: { id }, include: { images: true } });
     if (existing) {
-      if (existing.avatarUrl) await deleteBlobByUrl(existing.avatarUrl);
-      for (const img of existing.images) {
-        await deleteBlobByUrl(img.url);
-      }
+      if (existing.avatarUrl && existing.avatarUrl.startsWith("http")) await deleteBlobByUrl(existing.avatarUrl);
+      for (const img of existing.images) { if (img.url.startsWith("http")) await deleteBlobByUrl(img.url); }
     }
     await db.teacher.delete({ where: { id } });
-    return toDashboard(request, "ok=教师已删除");
+    return toPage(request, "ok=已删除");
   }
 
-  if (!name) {
-    return toDashboard(request, "error=教师姓名不能为空");
-  }
+  if (!name) return toPage(request, "error=姓名不能为空");
 
-  const imageFiles = formData
-    .getAll("images")
-    .filter((item): item is File => item instanceof File && item.size > 0);
+  const imageFiles = formData.getAll("images").filter((item): item is File => item instanceof File && item.size > 0);
 
   if (action === "create") {
-    const avatarUrl = avatarFile
-      ? (await uploadSingleFileToBlob(avatarFile, "teacher-avatar")).url
-      : "";
-
+    const avatarUrl = avatarFile ? (await uploadSingleFileToBlob(avatarFile, "teacher-avatar")).url : "";
     const uploadedImages = [];
     for (let i = 0; i < imageFiles.length; i++) {
       const uploaded = await uploadSingleFileToBlob(imageFiles[i], "teacher");
       uploadedImages.push({ url: uploaded.url, sortOrder: i });
     }
-
     await db.teacher.create({
-      data: {
-        name,
-        position,
-        college,
-        major,
-        bio,
-        achievements,
-        expertise,
-        avatarUrl,
-        sortOrder,
-        images: uploadedImages.length
-          ? { create: uploadedImages }
-          : undefined,
-      },
+      data: { name, position, college, major, bio, achievements, expertise, avatarUrl, sortOrder, images: uploadedImages.length ? { create: uploadedImages } : undefined },
     });
-    return toDashboard(request, "ok=教师创建成功");
+    return toPage(request, "ok=创建成功");
   }
 
-  if (!id) return toDashboard(request, "error=缺少教师ID");
+  if (!id) return toPage(request, "error=缺少ID");
 
   let avatarUrl: string | undefined;
   if (avatarFile) {
     const existing = await db.teacher.findUnique({ where: { id } });
-    if (existing && existing.avatarUrl) await deleteBlobByUrl(existing.avatarUrl);
+    if (existing && existing.avatarUrl && existing.avatarUrl.startsWith("http")) await deleteBlobByUrl(existing.avatarUrl);
     avatarUrl = (await uploadSingleFileToBlob(avatarFile, "teacher-avatar")).url;
   }
 
-  const existingImages = await db.teacherImage.findMany({
-    where: { teacherId: id },
-  });
-  const keepImageIds = formData
-    .getAll("keepImageIds")
-    .map((item) => String(item));
-  const imagesToDelete = existingImages.filter(
-    (img) => !keepImageIds.includes(img.id)
-  );
-  for (const img of imagesToDelete) {
-    await deleteBlobByUrl(img.url);
-    await db.teacherImage.delete({ where: { id: img.id } });
-  }
+  const existingImages = await db.teacherImage.findMany({ where: { teacherId: id } });
+  const keepImageIds = formData.getAll("keepImageIds").map((item) => String(item));
+  const imagesToDelete = existingImages.filter((img) => !keepImageIds.includes(img.id));
+  for (const img of imagesToDelete) { if (img.url.startsWith("http")) await deleteBlobByUrl(img.url); await db.teacherImage.delete({ where: { id: img.id } }); }
 
   const newUploadedImages = [];
   for (let i = 0; i < imageFiles.length; i++) {
@@ -116,20 +88,7 @@ export async function POST(request: NextRequest) {
 
   await db.teacher.update({
     where: { id },
-    data: {
-      name,
-      position,
-      college,
-      major,
-      bio,
-      achievements,
-      expertise,
-      sortOrder,
-      ...(avatarUrl !== undefined ? { avatarUrl } : {}),
-      images: newUploadedImages.length
-        ? { create: newUploadedImages }
-        : undefined,
-    },
+    data: { name, position, college, major, bio, achievements, expertise, sortOrder, ...(avatarUrl !== undefined ? { avatarUrl } : {}), images: newUploadedImages.length ? { create: newUploadedImages } : undefined },
   });
-  return toDashboard(request, "ok=教师更新成功");
+  return toPage(request, "ok=更新成功");
 }

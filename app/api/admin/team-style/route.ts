@@ -5,13 +5,26 @@ import { uploadSingleFileToBlob, deleteBlobByUrl } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
-function toDashboard(request: NextRequest, query: string) {
-  return NextResponse.redirect(new URL(`/admin/dashboard/team-style?${query}`, request.url));
+function isAjax(request: NextRequest) {
+  return request.headers.get("accept")?.includes("application/json") ||
+    request.headers.get("x-requested-with") === "XMLHttpRequest";
+}
+
+function jsonResponse(ok: boolean, message: string) {
+  return NextResponse.json({ ok, message });
+}
+
+function toPage(request: NextRequest, query: string, page: string) {
+  if (isAjax(request)) {
+    const params = new URLSearchParams(query);
+    return jsonResponse(!!params.get("ok"), params.get("ok") || params.get("error") || "");
+  }
+  return NextResponse.redirect(new URL(`/admin/dashboard/${page}?${query}`, request.url));
 }
 
 export async function POST(request: NextRequest) {
   const session = await getAdminSessionFromRequest(request);
-  if (!session) return toDashboard(request, "error=后台登录已失效");
+  if (!session) return toPage(request, "error=后台登录已失效", "team-style");
 
   const formData = await request.formData();
   const action = String(formData.get("action") ?? "");
@@ -21,42 +34,33 @@ export async function POST(request: NextRequest) {
   const imageFile = imageInput instanceof File && imageInput.size > 0 ? imageInput : null;
 
   if (!["create", "update", "delete"].includes(action)) {
-    return toDashboard(request, "error=无效团队风采操作");
+    return toPage(request, "error=无效操作", "team-style");
   }
 
   if (action === "delete") {
-    if (!id) return toDashboard(request, "error=缺少团队风采ID");
+    if (!id) return toPage(request, "error=缺少ID", "team-style");
     const existing = await db.teamStyleImage.findUnique({ where: { id } });
-    if (existing) await deleteBlobByUrl(existing.imageUrl);
+    if (existing && existing.imageUrl.startsWith("http")) await deleteBlobByUrl(existing.imageUrl);
     await db.teamStyleImage.delete({ where: { id } });
-    return toDashboard(request, "ok=团队风采已删除");
+    return toPage(request, "ok=已删除", "team-style");
   }
 
   if (action === "create") {
-    if (!imageFile) return toDashboard(request, "error=请上传图片");
+    if (!imageFile) return toPage(request, "error=请上传图片", "team-style");
     const uploaded = await uploadSingleFileToBlob(imageFile, "team-style");
-    await db.teamStyleImage.create({
-      data: {
-        imageUrl: uploaded.url,
-        sortOrder,
-      },
-    });
-    return toDashboard(request, "ok=团队风采创建成功");
+    await db.teamStyleImage.create({ data: { imageUrl: uploaded.url, sortOrder } });
+    return toPage(request, "ok=创建成功", "team-style");
   }
 
-  if (!id) return toDashboard(request, "error=缺少团队风采ID");
+  if (!id) return toPage(request, "error=缺少ID", "team-style");
   const uploaded = imageFile ? await uploadSingleFileToBlob(imageFile, "team-style") : null;
   if (uploaded) {
     const existing = await db.teamStyleImage.findUnique({ where: { id } });
-    if (existing) await deleteBlobByUrl(existing.imageUrl);
+    if (existing && existing.imageUrl.startsWith("http")) await deleteBlobByUrl(existing.imageUrl);
   }
-
   await db.teamStyleImage.update({
     where: { id },
-    data: {
-      sortOrder,
-      ...(uploaded ? { imageUrl: uploaded.url } : {}),
-    },
+    data: { sortOrder, ...(uploaded ? { imageUrl: uploaded.url } : {}) },
   });
-  return toDashboard(request, "ok=团队风采更新成功");
+  return toPage(request, "ok=更新成功", "team-style");
 }

@@ -5,13 +5,22 @@ import { uploadSingleFileToBlob, deleteBlobByUrl } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
-function toDashboard(request: NextRequest, query: string) {
+function isAjax(request: NextRequest) {
+  return request.headers.get("accept")?.includes("application/json") ||
+    request.headers.get("x-requested-with") === "XMLHttpRequest";
+}
+
+function toPage(request: NextRequest, query: string) {
+  if (isAjax(request)) {
+    const params = new URLSearchParams(query);
+    return NextResponse.json({ ok: !!params.get("ok"), message: params.get("ok") || params.get("error") || "" });
+  }
   return NextResponse.redirect(new URL(`/admin/dashboard/projects?${query}`, request.url));
 }
 
 export async function POST(request: NextRequest) {
   const session = await getAdminSessionFromRequest(request);
-  if (!session) return toDashboard(request, "error=后台登录已失效");
+  if (!session) return toPage(request, "error=后台登录已失效");
 
   const formData = await request.formData();
   const action = String(formData.get("action") ?? "");
@@ -22,145 +31,72 @@ export async function POST(request: NextRequest) {
   const techStack = String(formData.get("techStack") ?? "").trim();
   const sortOrder = Number(formData.get("sortOrder") ?? 0);
 
-  if (!["create", "update", "delete"].includes(action)) {
-    return toDashboard(request, "error=无效项目操作");
-  }
+  if (!["create", "update", "delete"].includes(action)) return toPage(request, "error=无效操作");
 
   if (action === "delete") {
-    if (!id) return toDashboard(request, "error=缺少项目ID");
-    const existing = await db.project.findUnique({
-      where: { id },
-      include: { images: true },
-    });
-    if (existing) {
-      for (const img of existing.images) {
-        await deleteBlobByUrl(img.url);
-      }
-    }
+    if (!id) return toPage(request, "error=缺少ID");
+    const existing = await db.project.findUnique({ where: { id }, include: { images: true } });
+    if (existing) { for (const img of existing.images) { if (img.url.startsWith("http")) await deleteBlobByUrl(img.url); } }
     await db.project.delete({ where: { id } });
-    return toDashboard(request, "ok=项目已删除");
+    return toPage(request, "ok=已删除");
   }
 
-  if (!title || !description) {
-    return toDashboard(request, "error=项目标题和描述不能为空");
-  }
+  if (!title || !description) return toPage(request, "error=标题和描述不能为空");
 
-  const imageFiles = formData
-    .getAll("images")
-    .filter((item): item is File => item instanceof File && item.size > 0);
+  const imageFiles = formData.getAll("images").filter((item): item is File => item instanceof File && item.size > 0);
 
-  const awardsRaw = formData.getAll("awards").map((item) => {
-    try {
-      return JSON.parse(String(item));
-    } catch {
-      return null;
-    }
-  }).filter(Boolean) as { id?: string; date: string; name: string; sortOrder?: number }[];
+  const awardDateNames = formData.getAll("awardDateName").map(String).filter(Boolean);
 
   if (action === "create") {
     const uploadedImages = [];
-    for (let i = 0; i < imageFiles.length; i++) {
+    for (let i = 0; i < Math.min(imageFiles.length, 3); i++) {
       const uploaded = await uploadSingleFileToBlob(imageFiles[i], "project");
       uploadedImages.push({ url: uploaded.url, sortOrder: i });
     }
-
+    const awards = [];
+    for (const dn of awardDateNames) {
+      const [date, ...nameParts] = dn.split("|");
+      if (date && nameParts.length) awards.push({ date, name: nameParts.join("|"), sortOrder: awards.length });
+    }
     await db.project.create({
       data: {
-        title,
-        description,
-        authors,
-        techStack,
-        sortOrder,
-        images: uploadedImages.length
-          ? { create: uploadedImages }
-          : undefined,
-        awards: awardsRaw.length
-          ? {
-              create: awardsRaw.map((a, i) => ({
-                date: a.date,
-                name: a.name,
-                sortOrder: a.sortOrder ?? i,
-              })),
-            }
-          : undefined,
+        title, description, authors, techStack, sortOrder,
+        images: uploadedImages.length ? { create: uploadedImages } : undefined,
+        awards: awards.length ? { create: awards } : undefined,
       },
     });
-    return toDashboard(request, "ok=项目创建成功");
+    return toPage(request, "ok=创建成功");
   }
 
-  if (!id) return toDashboard(request, "error=缺少项目ID");
+  if (!id) return toPage(request, "error=缺少ID");
 
-  const existingImages = await db.projectImage.findMany({
-    where: { projectId: id },
-  });
-  const keepImageIds = formData
-    .getAll("keepImageIds")
-    .map((item) => String(item));
-  const imagesToDelete = existingImages.filter(
-    (img) => !keepImageIds.includes(img.id)
-  );
-  for (const img of imagesToDelete) {
-    await deleteBlobByUrl(img.url);
-    await db.projectImage.delete({ where: { id: img.id } });
-  }
+  const existingImages = await db.projectImage.findMany({ where: { projectId: id } });
+  const keepImageIds = formData.getAll("keepImageIds").map(String);
+  const imagesToDelete = existingImages.filter((img) => !keepImageIds.includes(img.id));
+  for (const img of imagesToDelete) { if (img.url.startsWith("http")) await deleteBlobByUrl(img.url); await db.projectImage.delete({ where: { id: img.id } }); }
 
   const newUploadedImages = [];
-  for (let i = 0; i < imageFiles.length; i++) {
+  for (let i = 0; i < Math.min(imageFiles.length, 3); i++) {
     const uploaded = await uploadSingleFileToBlob(imageFiles[i], "project");
     newUploadedImages.push({ url: uploaded.url, sortOrder: i });
   }
 
-  const existingAwards = await db.projectAward.findMany({
-    where: { projectId: id },
-  });
-  const keepAwardIds = awardsRaw
-    .filter((a) => a.id)
-    .map((a) => a.id as string);
-  const awardsToDelete = existingAwards.filter(
-    (a) => !keepAwardIds.includes(a.id)
-  );
-  if (awardsToDelete.length) {
-    await db.projectAward.deleteMany({
-      where: { id: { in: awardsToDelete.map((a) => a.id) } },
-    });
+  // Handle awards
+  const existingAwards = await db.projectAward.findMany({ where: { projectId: id } });
+  await db.projectAward.deleteMany({ where: { projectId: id } });
+  const awards = [];
+  for (const dn of awardDateNames) {
+    const [date, ...nameParts] = dn.split("|");
+    if (date && nameParts.length) awards.push({ date, name: nameParts.join("|"), sortOrder: awards.length });
   }
-
-  for (const a of awardsRaw) {
-    if (a.id) {
-      await db.projectAward.update({
-        where: { id: a.id },
-        data: {
-          date: a.date,
-          name: a.name,
-          sortOrder: a.sortOrder ?? 0,
-        },
-      });
-    }
-  }
-
-  const newAwards = awardsRaw.filter((a) => !a.id);
 
   await db.project.update({
     where: { id },
     data: {
-      title,
-      description,
-      authors,
-      techStack,
-      sortOrder,
-      images: newUploadedImages.length
-        ? { create: newUploadedImages }
-        : undefined,
-      awards: newAwards.length
-        ? {
-            create: newAwards.map((a, i) => ({
-              date: a.date,
-              name: a.name,
-              sortOrder: a.sortOrder ?? i,
-            })),
-          }
-        : undefined,
+      title, description, authors, techStack, sortOrder,
+      images: newUploadedImages.length ? { create: newUploadedImages } : undefined,
+      awards: awards.length ? { create: awards } : undefined,
     },
   });
-  return toDashboard(request, "ok=项目更新成功");
+  return toPage(request, "ok=更新成功");
 }
