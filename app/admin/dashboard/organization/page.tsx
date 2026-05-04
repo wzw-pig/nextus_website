@@ -172,14 +172,14 @@ export default async function AdminOrganizationPage({ searchParams }: Props) {
         <div className="container">
           <h2 style={{ fontSize: "1.3rem", marginBottom: "1rem" }}>新增部门</h2>
           <AsyncSubmitForm
-            action="/api/admin/organization"
+            action="/api/admin/org-departments"
             className="stack"
             encType="multipart/form-data"
             submitText="新增部门"
             workingText="正在提交..."
             successRedirect="/admin/dashboard/organization"
           >
-            <input type="hidden" name="action" value="createDepartment" />
+            <input type="hidden" name="action" value="create" />
             <div className="row">
               <label>
                 部门名称
@@ -216,9 +216,9 @@ export default async function AdminOrganizationPage({ searchParams }: Props) {
                       style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", borderRadius: 10, marginBottom: "0.6rem" }}
                     />
                   ) : null}
-                  <form className="stack" action="/api/admin/organization" method="post" encType="multipart/form-data">
+                  <form className="stack" action="/api/admin/org-departments" method="post" encType="multipart/form-data">
                     <input type="hidden" name="id" value={dept.id} />
-                    <input type="hidden" name="action" value="updateDepartment" />
+                    <input type="hidden" name="action" value="update" />
                     <label>
                       部门名称
                       <input name="name" defaultValue={dept.name} required />
@@ -239,9 +239,9 @@ export default async function AdminOrganizationPage({ searchParams }: Props) {
                       保存修改
                     </button>
                   </form>
-                  <form action="/api/admin/organization" method="post" style={{ marginTop: "0.5rem" }}>
+                  <form action="/api/admin/org-departments" method="post" style={{ marginTop: "0.5rem" }}>
                     <input type="hidden" name="id" value={dept.id} />
-                    <input type="hidden" name="action" value="deleteDepartment" />
+                    <input type="hidden" name="action" value="delete" />
                     <button className="btn btn-neutral" type="submit">
                       删除
                     </button>

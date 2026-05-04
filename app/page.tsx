@@ -106,8 +106,18 @@ export default async function HomePage() {
       <section id="achievements" className="section">
         <div className="container">
           <h2 className="section-title">成果展示</h2>
-          {landscapeAchievements.length > 0 && <><h3 className="subsection-title">横版奖状</h3><AchievementScroll achievements={landscapeAchievements} /></>}
-          {portraitAchievements.length > 0 && <><h3 className="subsection-title" style={{ marginTop: "2rem" }}>竖版奖状</h3><AchievementScroll achievements={portraitAchievements} /></>}
+          {landscapeAchievements.length > 0 && (
+            <>
+              <h3 className="subsection-title"></h3>
+              <AchievementScroll achievements={landscapeAchievements} direction="left" />
+            </>
+          )}
+          {portraitAchievements.length > 0 && (
+            <>
+              <h3 className="subsection-title" style={{ marginTop: "2rem" }}></h3>
+              <AchievementScroll achievements={portraitAchievements} direction="right" />
+            </>
+          )}
           {achievements.length === 0 && <div className="card"><p className="meta">暂无成果展示。</p></div>}
         </div>
       </section>
@@ -294,10 +304,11 @@ export default async function HomePage() {
 
 // ========== Sub Components ==========
 
-function AchievementScroll({ achievements }: { achievements: any[] }) {
+function AchievementScroll({ achievements, direction }: { achievements: any[]; direction: "left" | "right" }) {
+  const animationName = direction === "left" ? "scrollLeft" : "scrollRight";
   return (
     <div style={{ overflow: "hidden", position: "relative" }}>
-      <div style={{ display: "flex", gap: "1.5rem", animation: "scrollLeft 30s linear infinite", width: "max-content" }}>
+      <div style={{ display: "flex", gap: "1.5rem", animation: `${animationName} 30s linear infinite`, width: "max-content" }}>
         {[...achievements, ...achievements, ...achievements].map((item, index) => (
           <div key={`${item.id}-${index}`} style={{ position: "relative", flexShrink: 0, borderRadius: 15, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
             <img src={item.imageUrl} alt={item.name} style={{ height: 240, width: "auto", objectFit: "contain", display: "block" }} />

@@ -23,7 +23,14 @@ export async function POST(request: NextRequest) {
   if (!session) return toPage(request, "error=后台登录已失效");
 
   const formData = await request.formData();
-  const action = String(formData.get("action") ?? "");
+  const rawAction = String(formData.get("action") ?? "");
+  const action = rawAction === "createDepartment"
+    ? "create"
+    : rawAction === "updateDepartment"
+      ? "update"
+      : rawAction === "deleteDepartment"
+        ? "delete"
+        : rawAction;
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();

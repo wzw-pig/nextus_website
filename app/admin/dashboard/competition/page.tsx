@@ -43,7 +43,7 @@ export default async function AdminCompetitionPage({ searchParams }: Props) {
         <div className="container">
           <h2 style={{ fontSize: "1.3rem", marginBottom: "1rem" }}>上传图片</h2>
           <AsyncSubmitForm
-            action="/api/admin/competition"
+            action="/api/admin/competition-photos"
             className="stack"
             encType="multipart/form-data"
             submitText="上传图片"
@@ -78,7 +78,7 @@ export default async function AdminCompetitionPage({ searchParams }: Props) {
                     style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 10, marginBottom: "0.6rem" }}
                   />
                   <p className="meta">排序：{item.sortOrder}</p>
-                  <form action="/api/admin/competition" method="post">
+                  <form action="/api/admin/competition-photos" method="post">
                     <input type="hidden" name="id" value={item.id} />
                     <input type="hidden" name="action" value="delete" />
                     <button className="btn btn-neutral" type="submit">
