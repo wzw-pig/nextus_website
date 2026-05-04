@@ -9,9 +9,6 @@ export function IntranetNav() {
       <Link href="/intranet/forum" className="btn btn-neutral">
         论坛
       </Link>
-      <Link href="/intranet/forum/resources" className="btn btn-neutral">
-        资料发布
-      </Link>
       <Link href="/intranet/training" className="btn btn-neutral">
         入职培训
       </Link>

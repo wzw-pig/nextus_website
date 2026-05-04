@@ -51,106 +51,112 @@ export default async function FloorReservationsPage({ searchParams }: Props) {
   return (
     <>
       <section className="section">
-        <div className="section-header">
-          <div>
-            <h2>十楼教工小家可使用时间表</h2>
-            <p className="meta">日期为列、时段为行；绿色可预约，红色已占用。</p>
+        <div className="container">
+          <div className="section-header">
+            <div>
+              <h2>十楼教工小家可使用时间表</h2>
+              <p className="meta">日期为列、时段为行；绿色可预约，红色已占用。</p>
+            </div>
+            <IntranetNav />
           </div>
-          <IntranetNav />
+          {searchParams?.error ? <p className="danger">{decodeURIComponent(searchParams.error)}</p> : null}
+          {searchParams?.ok ? <p className="ok">{decodeURIComponent(searchParams.ok)}</p> : null}
         </div>
-        {searchParams?.error ? <p className="danger">{decodeURIComponent(searchParams.error)}</p> : null}
-        {searchParams?.ok ? <p className="ok">{decodeURIComponent(searchParams.ok)}</p> : null}
       </section>
 
       <section className="section">
-        <h2>新增预约</h2>
-        <AsyncSubmitForm
-          action="/api/intranet/floor-reservations"
-          className="stack"
-          submitText="提交预约"
-          workingText="正在提交预约..."
-          successRedirect="/intranet/floor-reservations"
-        >
-          <div className="row">
+        <div className="container">
+          <h2>新增预约</h2>
+          <AsyncSubmitForm
+            action="/api/intranet/floor-reservations"
+            className="stack"
+            submitText="提交预约"
+            workingText="正在提交预约..."
+            successRedirect="/intranet/floor-reservations"
+          >
+            <div className="row">
+              <label>
+                日期
+                <select name="date" defaultValue={fmtDate(days[0])}>
+                  {days.map((d) => (
+                    <option key={fmtDate(d)} value={fmtDate(d)}>
+                      {fmtDate(d)}（{weekLabels[d.getDay()]}）
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                时段
+                <select name="slot" defaultValue={floorTimeSlots[0]}>
+                  {floorTimeSlots.map((slot) => (
+                    <option key={slot} value={slot}>
+                      {floorTimeSlotLabels[slot]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <label>
-              日期
-              <select name="date" defaultValue={fmtDate(days[0])}>
-                {days.map((d) => (
-                  <option key={fmtDate(d)} value={fmtDate(d)}>
-                    {fmtDate(d)}（{weekLabels[d.getDay()]}）
-                  </option>
-                ))}
-              </select>
+              使用事由（10字以内）
+              <input name="reason" maxLength={10} required />
             </label>
-            <label>
-              时段
-              <select name="slot" defaultValue={floorTimeSlots[0]}>
-                {floorTimeSlots.map((slot) => (
-                  <option key={slot} value={slot}>
-                    {floorTimeSlotLabels[slot]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <label>
-            使用事由（10字以内）
-            <input name="reason" maxLength={10} required />
-          </label>
-        </AsyncSubmitForm>
+          </AsyncSubmitForm>
+        </div>
       </section>
 
       <section className="section">
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>时段</th>
-                {days.map((d) => (
-                  <th key={fmtDate(d)}>
-                    {fmtDate(d)}
-                    <br />
-                    {weekLabels[d.getDay()]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {floorTimeSlots.map((slot) => (
-                <tr key={slot}>
-                  <td>{floorTimeSlotLabels[slot]}</td>
-                  {days.map((d) => {
-                    const key = `${fmtDate(d)}|${slot}`;
-                    const item = byCell.get(key);
-                    const canDelete = item && (item.userId === session.userId || session.isForumAdmin);
-                    const deletingOther = item && item.userId !== session.userId;
-                    return (
-                      <td key={key} style={{ background: item ? "#fee2e2" : "#dcfce7" }}>
-                        {item ? (
-                          <div className="stack" style={{ gap: "0.35rem" }}>
-                            <p className="meta" style={{ margin: 0 }}>
-                              {item.reason}（{item.user.name}）
-                            </p>
-                            {canDelete ? (
-                              <form className="stack" action="/api/intranet/floor-reservations/delete" method="post">
-                                <input type="hidden" name="reservationId" value={item.id} />
-                                {deletingOther ? <input name="reason" placeholder="删除理由（必填）" required /> : null}
-                                <button className="btn btn-neutral" type="submit">
-                                  删除
-                                </button>
-                              </form>
-                            ) : null}
-                          </div>
-                        ) : (
-                          <span className="meta">可用</span>
-                        )}
-                      </td>
-                    );
-                  })}
+        <div className="container">
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>时段</th>
+                  {days.map((d) => (
+                    <th key={fmtDate(d)}>
+                      {fmtDate(d)}
+                      <br />
+                      {weekLabels[d.getDay()]}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {floorTimeSlots.map((slot) => (
+                  <tr key={slot}>
+                    <td>{floorTimeSlotLabels[slot]}</td>
+                    {days.map((d) => {
+                      const key = `${fmtDate(d)}|${slot}`;
+                      const item = byCell.get(key);
+                      const canDelete = item && (item.userId === session.userId || session.isForumAdmin);
+                      const deletingOther = item && item.userId !== session.userId;
+                      return (
+                        <td key={key} style={{ background: item ? "#fee2e2" : "#dcfce7" }}>
+                          {item ? (
+                            <div className="stack" style={{ gap: "0.35rem" }}>
+                              <p className="meta" style={{ margin: 0 }}>
+                                {item.reason}（{item.user.name}）
+                              </p>
+                              {canDelete ? (
+                                <form className="stack" action="/api/intranet/floor-reservations/delete" method="post">
+                                  <input type="hidden" name="reservationId" value={item.id} />
+                                  {deletingOther ? <input name="reason" placeholder="删除理由（必填）" required /> : null}
+                                  <button className="btn btn-neutral" type="submit">
+                                    删除
+                                  </button>
+                                </form>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="meta">可用</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </>

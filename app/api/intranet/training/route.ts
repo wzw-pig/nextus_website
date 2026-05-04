@@ -36,8 +36,11 @@ export async function POST(request: NextRequest) {
     .map((item) => String(item))
     .filter(Boolean);
   const attachmentInputs = formData.getAll("attachments");
-  const attachments = attachmentInputs.filter((item): item is File => item instanceof File && item.size > 0);
-  if (attachmentInputs.length > 0 && attachments.length === 0) {
+  const selectedAttachmentInputs = attachmentInputs.filter(
+    (item): item is File => item instanceof File && item.name.trim().length > 0
+  );
+  const attachments = selectedAttachmentInputs.filter((item) => item.size > 0);
+  if (selectedAttachmentInputs.length > 0 && attachments.length === 0) {
     return wantsJson(request)
       ? json(false, "附件读取失败，请重新选择文件")
       : toTraining(request, "error=附件读取失败，请重新选择文件");

@@ -72,13 +72,6 @@ export default async function IntranetHomePage({ searchParams }: Props) {
               </Link>
             </div>
             <div className="card">
-              <h3>资料发布（论坛分类）</h3>
-              <p className="meta">在&quot;资料发布&quot;分类发帖并上传附件，其他用户可回帖讨论。</p>
-              <Link href="/intranet/forum/resources" className="btn btn-neutral" style={{ marginTop: "0.8rem" }}>
-                进入资料分类
-              </Link>
-            </div>
-            <div className="card">
               <h3>十楼使用预约</h3>
               <p className="meta">查看未来7天十楼教工小家可用时间并发起预约。</p>
               <Link href="/intranet/floor-reservations" className="btn btn-neutral" style={{ marginTop: "0.8rem" }}>

@@ -21,25 +21,29 @@ export default async function ForumHomePage() {
   return (
     <>
       <section className="section">
-        <div className="section-header">
-          <div>
-            <h2>内网论坛</h2>
-            <p className="meta">选择分类进入帖子列表。</p>
+        <div className="container">
+          <div className="section-header">
+            <div>
+              <h2>内网论坛</h2>
+              <p className="meta">选择分类进入帖子列表。</p>
+            </div>
+            <IntranetNav />
           </div>
-          <IntranetNav />
         </div>
       </section>
       <section className="section">
-        <div className="grid grid-3">
-          {categories.map((item) => (
-            <article key={item.id} className="card">
-              <h3>{item.name}</h3>
-              <p className="meta">帖子数：{item._count.posts}</p>
-              <Link href={`/intranet/forum/${item.slug}`} className="btn btn-neutral">
-                进入分类
-              </Link>
-            </article>
-          ))}
+        <div className="container">
+          <div className="grid grid-3">
+            {categories.map((item) => (
+              <article key={item.id} className="card">
+                <h3>{item.name}</h3>
+                <p className="meta">帖子数：{item._count.posts}</p>
+                <Link href={`/intranet/forum/${item.slug}`} className="btn btn-neutral">
+                  进入分类
+                </Link>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </>
